@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMDR Visual Aid (URL Invite)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        canvas { display: block; width: 100%; height: 100%; }
+        .modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(17, 24, 39, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 32rem;
+            width: 100%;
+        }
+        /* Custom styles for the range slider */
+        input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #d1d5db; border-radius: 9999px; outline: none; opacity: 0.7; transition: opacity 0.2s; }
+        input[type="range"]:hover { opacity: 1; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 4px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+        input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; background: #3b82f6; cursor: pointer; border-radius: 50%; border: 4px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+        .hidden { display: none; }
+        textarea { resize: none; }
+    </style>
+</head>
+<body class="bg-gray-100 antialiased">
+    <!-- Role Selection Modal -->
+    <div id="roleSelectionModal" class="modal">
+        <div class="modal-content text-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Choose Your Role</h2>
+            <p class="text-gray-600 mb-8">Select "Controller" to start and share a session, or join a session using an invite link.</p>
+            <div class="flex flex-col md:flex-row gap-4">
+                <button id="controllerBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition duration-300 shadow-md">Start as Controller</button>
+            </div>
+             <p class="text-gray-500 text-sm mt-6">To join as an Observer, simply open the invite link provided by the Controller.</p>
+        </div>
+    </div>
+    
+    <!-- Controller Invite Modal -->
+    <div id="inviteModal" class="modal hidden">
+        <div class="modal-content space-y-4">
+            <h2 class="text-2xl font-bold text-gray-800 text-center">Controller Setup</h2>
+            <div>
+                <label class="font-medium text-gray-700">1. Share this invite link with the Observer:</label>
+                <div class="relative mt-2">
+                    <input type="text" id="inviteLink" class="w-full border-gray-300 border p-3 rounded-lg bg-gray-50 pr-28" readonly>
+                    <button id="copyLinkBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-600">Copy</button>
+                </div>
+            </div>
+            <div>
+                <label for="answerSdp" class="font-medium text-gray-700">2. Paste the Observer's answer here to connect:</label>
+                <textarea id="answerSdp" rows="4" placeholder="Waiting for Observer's answer..." class="w-full border-gray-300 border p-2 rounded-lg mt-2"></textarea>
+            </div>
+            <button id="connectControllerBtn" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition">Start Session</button>
+        </div>
+    </div>
+
+    <!-- Observer Answer Modal -->
+     <div id="observerAnswerModal" class="modal hidden">
+        <div class="modal-content space-y-4">
+            <h2 class="text-2xl font-bold text-gray-800 text-center">Observer Setup</h2>
+             <div>
+                <label class="font-medium text-gray-700">Almost there! Copy this answer and send it back to the Controller:</label>
+                 <div class="relative mt-2">
+                    <textarea id="observerAnswerSdp" rows="5" class="w-full border-gray-300 border p-3 rounded-lg bg-gray-50 pr-28" readonly></textarea>
+                    <button id="copyAnswerBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-blue-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-600">Copy</button>
+                </div>
+                <p class="text-center text-gray-500 mt-4">The session will begin automatically once the Controller connects.</p>
+            </div>
+        </div>
+    </div>
+
+
+    <canvas id="emdrCanvas" class="hidden"></canvas>
+
+    <!-- Controller Controls -->
+    <div id="controls" class="hidden fixed bottom-0 left-0 right-0 bg-white bg-opacity-80 backdrop-blur-sm p-4 md:p-6 shadow-t-lg rounded-t-xl">
+        <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <div class="flex flex-col space-y-2">
+                <div class="flex justify-between items-center">
+                    <label for="speed" class="font-medium text-gray-700">Traversal Time</label>
+                    <span id="speedValue" class="text-sm font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded-md">1.13s</span>
+                </div>
+                <input type="range" id="speed" min="250" max="2000" value="1125" class="w-full">
+            </div>
+            <div class="flex flex-col space-y-2">
+                <label for="bgColor" class="font-medium text-gray-700">Background Color</label>
+                <input type="color" id="bgColor" value="#f3f4f6" class="w-full h-10 p-1 border border-gray-300 rounded-lg cursor-pointer">
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        // --- DOM Elements ---
+        const canvas = document.getElementById('emdrCanvas');
+        const ctx = canvas.getContext('2d');
+        const speedSlider = document.getElementById('speed');
+        const speedValueDisplay = document.getElementById('speedValue');
+        const bgColorPicker = document.getElementById('bgColor');
+        const controlsPanel = document.getElementById('controls');
+        
+        // --- UI Elements ---
+        const roleSelectionModal = document.getElementById('roleSelectionModal');
+        const controllerBtn = document.getElementById('controllerBtn');
+        const inviteModal = document.getElementById('inviteModal');
+        const inviteLink = document.getElementById('inviteLink');
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        const answerSdp = document.getElementById('answerSdp');
+        const connectControllerBtn = document.getElementById('connectControllerBtn');
+        const observerAnswerModal = document.getElementById('observerAnswerModal');
+        const observerAnswerSdp = document.getElementById('observerAnswerSdp');
+        const copyAnswerBtn = document.getElementById('copyAnswerBtn');
+        
+        // --- WebRTC and App State ---
+        let peerConnection;
+        let dataChannel;
+        let role;
+        
+        const iceServers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+        // --- Animation State ---
+        const NUM_VERTICES = 60; 
+        const SHAPES_SIDES = [0, 3, 4, 5, 6, 7, 8];
+        let state = { x: 100, y: 100, size: 40, dx: 5, currentShapeIndex: 0, morphProgress: 1.0, previousVertices: [], targetVertices: [], currentHue: 200, targetHue: 300 };
+
+        // --- Core Application Logic ---
+        
+        async function startAsController() {
+            role = 'controller';
+            roleSelectionModal.classList.add('hidden');
+            inviteModal.classList.remove('hidden');
+
+            peerConnection = new RTCPeerConnection(iceServers);
+            dataChannel = peerConnection.createDataChannel('emdr-state');
+            dataChannel.onopen = () => console.log('Data channel is open!');
+            dataChannel.onclose = () => console.log('Data channel is closed.');
+
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            // Wait for ICE gathering to complete to create a single, complete offer
+            peerConnection.onicegatheringstatechange = () => {
+                if (peerConnection.iceGatheringState === 'complete') {
+                    const encodedOffer = btoa(JSON.stringify(peerConnection.localDescription));
+                    const url = `${window.location.href.split('?')[0]}?offer=${encodedOffer}`;
+                    inviteLink.value = url;
+                }
+            };
+        }
+
+        async function joinAsObserver(encodedOffer) {
+            role = 'observer';
+            roleSelectionModal.classList.add('hidden');
+            observerAnswerModal.classList.remove('hidden');
+            
+            peerConnection = new RTCPeerConnection(iceServers);
+            
+            peerConnection.ondatachannel = event => {
+                dataChannel = event.channel;
+                dataChannel.onmessage = handleDataChannelMessage;
+                dataChannel.onopen = () => {
+                    console.log('Data channel is open!');
+                    startAnimation();
+                };
+                dataChannel.onclose = () => console.log('Data channel is closed.');
+            };
+
+            try {
+                const offer = JSON.parse(atob(encodedOffer));
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+                
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+
+                peerConnection.onicegatheringstatechange = () => {
+                    if (peerConnection.iceGatheringState === 'complete') {
+                        observerAnswerSdp.value = btoa(JSON.stringify(peerConnection.localDescription));
+                    }
+                };
+            } catch (e) {
+                alert('Invalid invite link. Please ask the controller for a new one.');
+                console.error(e);
+            }
+        }
+        
+        async function completeControllerConnection() {
+            try {
+                const answer = JSON.parse(atob(answerSdp.value));
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                startAnimation();
+            } catch (e) {
+                alert('Invalid answer format. Please ensure you copied it correctly.');
+                console.error(e);
+            }
+        }
+
+        // --- Data Sync Logic ---
+        function sendStateToPeer() {
+            if (role !== 'controller' || !dataChannel || dataChannel.readyState !== 'open') return;
+            const sessionData = {
+                speed: parseInt(speedSlider.value, 10),
+                bgColor: bgColorPicker.value,
+            };
+            dataChannel.send(JSON.stringify(sessionData));
+        }
+        
+        function handleDataChannelMessage(event) {
+            const sessionData = JSON.parse(event.data);
+            if (sessionData) {
+                speedSlider.value = sessionData.speed;
+                bgColorPicker.value = sessionData.bgColor;
+                updateSpeed();
+            }
+        }
+
+        function startAnimation() {
+            inviteModal.classList.add('hidden');
+            observerAnswerModal.classList.add('hidden');
+            canvas.classList.remove('hidden');
+            if (role === 'controller') {
+                controlsPanel.classList.remove('hidden');
+            }
+            initializeAnimation();
+        }
+
+        // --- Animation Logic (Unchanged) ---
+        function lerp(a, b, t) { return a * (1 - t) + b * t; }
+        function generateShapeVertices(sides, radius) {
+            const vertices = [], points = NUM_VERTICES;
+            if (sides === 0) { for (let i = 0; i < points; i++) { const angle = (i / points) * Math.PI * 2; vertices.push({ x: radius * Math.cos(angle), y: radius * Math.sin(angle) }); }
+            } else {
+                const polygonVertices = []; for (let i = 0; i < sides; i++) { const angle = (i / sides) * Math.PI * 2 - Math.PI / 2; polygonVertices.push({ x: radius * Math.cos(angle), y: radius * Math.sin(angle) }); }
+                for (let i = 0; i < sides; i++) { const startVertex = polygonVertices[i], endVertex = polygonVertices[(i + 1) % sides], pointsPerEdge = Math.floor(points / sides); for (let j = 0; j < pointsPerEdge; j++) { if (vertices.length >= points) break; const t = j / pointsPerEdge; vertices.push({ x: lerp(startVertex.x, endVertex.x, t), y: lerp(startVertex.y, endVertex.y, t) }); } }
+                while (vertices.length < points) { vertices.push(vertices[vertices.length - 1]); }
+            }
+            return vertices;
+        }
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            let panelHeight = controlsPanel.classList.contains('hidden') ? 0 : controlsPanel.offsetHeight;
+            canvas.height = window.innerHeight - panelHeight;
+            state.y = canvas.height / 2;
+            state.size = Math.max(30, Math.min(canvas.width, canvas.height) * 0.05);
+            const currentSides = SHAPES_SIDES[state.currentShapeIndex];
+            state.targetVertices = generateShapeVertices(currentSides, state.size);
+            if (state.morphProgress < 1) { const prevIndex = (state.currentShapeIndex - 1 + SHAPES_SIDES.length) % SHAPES_SIDES.length; state.previousVertices = generateShapeVertices(SHAPES_SIDES[prevIndex], state.size);
+            } else { state.previousVertices = JSON.parse(JSON.stringify(state.targetVertices)); }
+            updateSpeed();
+        }
+        function drawMorphedShape() {
+            const { x, y, currentHue, morphProgress, previousVertices, targetVertices } = state;
+            ctx.fillStyle = `hsl(${currentHue}, 80%, 60%)`; ctx.strokeStyle = `hsl(${currentHue}, 90%, 40%)`; ctx.lineWidth = 4;
+            ctx.beginPath();
+            if (!previousVertices.length || !targetVertices.length) return;
+            for (let i = 0; i < NUM_VERTICES; i++) { const prev = previousVertices[i], target = targetVertices[i], pointX = x + lerp(prev.x, target.x, morphProgress), pointY = y + lerp(prev.y, target.y, morphProgress); if (i === 0) ctx.moveTo(pointX, pointY); else ctx.lineTo(pointX, pointY); }
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+        }
+        function update() {
+            state.x += state.dx;
+            if (state.x + state.size > canvas.width || state.x - state.size < 0) {
+                state.dx *= -1;
+                state.previousVertices = JSON.parse(JSON.stringify(state.targetVertices));
+                state.currentShapeIndex = (state.currentShapeIndex + 1) % SHAPES_SIDES.length;
+                state.targetVertices = generateShapeVertices(SHAPES_SIDES[state.currentShapeIndex], state.size);
+                state.morphProgress = 0;
+                state.targetHue = (state.currentHue + 90 + Math.random() * 180) % 360;
+            }
+            if (state.morphProgress < 1) { state.morphProgress = Math.min(1, state.morphProgress + 0.015); }
+            let hueDiff = state.targetHue - state.currentHue;
+            if (Math.abs(hueDiff) > 180) { hueDiff = hueDiff > 0 ? hueDiff - 360 : hueDiff + 360; }
+            if (Math.abs(hueDiff) > 0.1) { state.currentHue = (state.currentHue + hueDiff * 0.02 + 360) % 360; }
+            ctx.fillStyle = bgColorPicker.value; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            drawMorphedShape();
+            requestAnimationFrame(update);
+        }
+        function updateSpeed() {
+            const traversalTimeMs = parseInt(speedSlider.value, 10);
+            const traversalTimeSec = traversalTimeMs / 1000;
+            speedValueDisplay.textContent = `${traversalTimeSec.toFixed(2)}s`;
+            const pixelsToTravel = canvas.width - (state.size * 2);
+            const framesToTravel = traversalTimeSec * 60;
+            if (framesToTravel > 0) { state.dx = Math.abs(pixelsToTravel / framesToTravel) * Math.sign(state.dx || 1); }
+        }
+        function initializeAnimation() {
+            resizeCanvas();
+            state.targetVertices = generateShapeVertices(SHAPES_SIDES[state.currentShapeIndex], state.size);
+            state.previousVertices = JSON.parse(JSON.stringify(state.targetVertices));
+            state.x = state.size * 2;
+            updateSpeed();
+            update();
+        }
+
+        // --- Event Listeners & Initialization ---
+        function setupEventListeners() {
+            controllerBtn.addEventListener('click', startAsController);
+            connectControllerBtn.addEventListener('click', completeControllerConnection);
+            
+            const setupCopyButton = (button, sourceElement) => {
+                button.addEventListener('click', () => {
+                    sourceElement.select();
+                    document.execCommand('copy');
+                    button.textContent = 'Copied!';
+                    setTimeout(() => button.textContent = 'Copy', 2000);
+                });
+            };
+            
+            setupCopyButton(copyLinkBtn, inviteLink);
+            setupCopyButton(copyAnswerBtn, observerAnswerSdp);
+            
+            speedSlider.addEventListener('input', () => { updateSpeed(); sendStateToPeer(); });
+            bgColorPicker.addEventListener('input', sendStateToPeer);
+            
+            window.addEventListener('resize', resizeCanvas);
+        }
+
+        function initializeApp() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const offerData = urlParams.get('offer');
+
+            if (offerData) {
+                // This is an Observer joining from a link
+                joinAsObserver(offerData);
+            }
+            // Otherwise, the Role Selection modal is shown by default
+
+            setupEventListeners();
+        }
+        
+        initializeApp();
+    </script>
+</body>
+</html>

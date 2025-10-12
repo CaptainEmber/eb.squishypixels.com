@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Collabs with 2D artists</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+</head>
+<body>
+    <model-viewer 
+        src="mdl/viewer/flynnryan.glb" 
+        poster="img/viewer/viewerposter.webp" 
+        shadow-intensity="1" 
+        ar 
+        camera-controls 
+        touch-action="pan-y" 
+        alt="2D->3D art collaborations with various artists">
+        
+        <button slot="ar-button" id="ar-button">
+            View in your space
+        </button>
+
+        <div id="ar-prompt">
+            <img src="https://modelviewer.dev/shared-assets/icons/hand.png">
+        </div>
+
+        <button id="ar-failure">
+            AR is not tracking!
+        </button>
+        
+        <details id="info-box">
+            <summary>Description</summary>
+            <p id="model-description">
+                This is the description for the initially loaded model. It will be updated when a new model is selected.
+            </p>
+        </details>
+
+        <div class="slider">
+            <div class="slides">
+                <!-- Update these buttons with your actual model names -->
+                <button class="slide selected" onclick="switchSrc(this, 'flynnryan')" style="background-image: url('img/viewer/flynnryan.jpg');">
+                </button>
+                
+                <button class="slide" onclick="switchSrc(this, 'johnloren')" style="background-image: url('img/viewer/johnloren.jpg');">
+                </button>
+                
+                <button class="slide" onclick="switchSrc(this, 'keroart')" style="background-image: url('img/viewer/keroart.jpg');">
+                </button>
+                
+                <button class="slide" onclick="switchSrc(this, 'shiftingatlas')" style="background-image: url('img/viewer/shiftingatlas.jpg');">
+                </button>
+
+                <button class="slide" onclick="switchSrc(this, 'walkert')" style="background-image: url('img/viewer/walkert.jpg');">
+                </button>
+            </div>
+        </div>
+    </model-viewer>
+
+<script type="module">
+    const modelViewer = document.querySelector("model-viewer");
+    // Get a reference to the paragraph element for the description
+    const modelDescription = document.getElementById("model-description");
+
+    // 1. Create an object to hold your descriptions
+    const descriptions = {
+        flynnryan: "I wanted to make a showcase for my buddy Flynn Ryan. He was a blast to work with, and now is a tattoo artist in Eugene, Oregon. Also, he is just a very real dude.",
+        johnloren: "One of my first attempts at a shadowbox. This was a cold call! I told him what I was doing and he was nice enough to let me work with his art. Many thanks to John Loren. He is a fantastic illustrator.",
+        keroart: "Originally it was animated so the ribbons would rotate back and forth. Kero_art is able to consistently produce absolute bangers, and has only gotten better since I worked with her. Honor and a pleasure.",
+        shiftingatlas: "One layer would pulse its transparency in and out. I had worked with ShiftingAtlas doing cosplay photography, and was really stoked to work with them again.",
+        walkert: "I got my stepdad Walker T hooked on VR by plugging him into my pre-ordered vive, and having him try TiltBrush. He got his own, and has been keeping up on VR trends ever since. This is some of his 2D work he made in Painting VR."
+    };
+
+    window.switchSrc = (element, name) => {
+        const modelPath = "mdl/viewer/" + name;
+        const imagePath = "img/viewer/" + name;
+
+        modelViewer.src = modelPath + '.glb';
+        modelViewer.poster = imagePath + '.jpg';
+        
+        // 2. Update the description text
+        if (descriptions[name]) {
+            modelDescription.textContent = descriptions[name];
+        } else {
+            modelDescription.textContent = "No description available for this model.";
+        }
+        
+        const slides = document.querySelectorAll(".slide");
+        slides.forEach((slide) => {
+            slide.classList.remove("selected");
+        });
+        element.classList.add("selected");
+    };
+
+    // Set the initial description on page load
+    modelDescription.textContent = descriptions['flynnryan'];
+
+    document.querySelector(".slider").addEventListener('beforexrselect', (ev) => {
+        ev.preventDefault();
+    });
+</script>
+
+    <style>
+        /* This keeps child nodes hidden while the element loads */
+        :not(:defined) > * {
+            display: none;
+        }
+
+        model-viewer {
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            width: 95vw;
+            height: 95vh;
+            background-color: #AAAAAA;
+            overflow-x: hidden;
+        }
+
+        #ar-button {
+            background-image: url(https://modelviewer.dev/shared-assets/icons/ic_view_in_ar_new_googblue_48dp.png);
+            background-repeat: no-repeat;
+            background-size: 20px 20px;
+            background-position: 12px 50%;
+            background-color: #fff;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            bottom: 132px;
+            padding: 0px 16px 0px 40px;
+            font-family: Roboto Regular, Helvetica Neue, sans-serif;
+            font-size: 14px;
+            color: #4285f4;
+            height: 36px;
+            line-height: 36px;
+            border-radius: 18px;
+            border: 1px solid #DADCE0;
+        }
+        
+        #info-box {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(5px);
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-width: 250px;
+            font-family: sans-serif;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        #info-box summary {
+            cursor: pointer;
+            font-weight: bold;
+            outline: none; /* Hides the default focus outline on some browsers */
+        }
+
+        #ar-button:active {
+            background-color: #E8EAED;
+        }
+
+        #ar-button:focus {
+            outline: none;
+        }
+
+        #ar-button:focus-visible {
+            outline: 1px solid #4285f4;
+        }
+
+        @keyframes circle {
+            from { transform: translateX(-50%) rotate(0deg) translateX(50px) rotate(0deg); }
+            to   { transform: translateX(-50%) rotate(360deg) translateX(50px) rotate(-360deg); }
+        }
+
+        @keyframes elongate {
+            from { transform: translateX(100px); }
+            to   { transform: translateX(-100px); }
+        }
+
+        model-viewer > #ar-prompt {
+            position: absolute;
+            left: 50%;
+            bottom: 175px;
+            animation: elongate 2s infinite ease-in-out alternate;
+            display: none;
+        }
+
+        model-viewer[ar-status="session-started"] > #ar-prompt {
+            display: block;
+        }
+
+        model-viewer > #ar-prompt > img {
+            animation: circle 4s linear infinite;
+        }
+
+        model-viewer > #ar-failure {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 175px;
+            display: none;
+        }
+
+        model-viewer[ar-tracking="not-tracking"] > #ar-failure {
+            display: block;
+        }
+
+        .slider {
+            width: 100%;
+            text-align: center;
+            overflow: hidden;
+            position: absolute;
+            bottom: 16px;
+        }
+
+        .slides {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            padding: 0 10px;
+        }
+
+        .slide {
+            scroll-snap-align: start;
+            flex-shrink: 0;
+            width: 100px;
+            height: 100px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: #fff;
+            margin-right: 10px;
+            border-radius: 10px;
+            border: none;
+            display: flex;
+            cursor: pointer;
+        }
+
+        .slide.selected {
+            border: 2px solid #4285f4;
+        }
+
+        .slide:focus {
+            outline: none;
+        }
+
+        .slide:focus-visible {
+            outline: 1px solid #4285f4;
+        }
+    </style>
+</body>
+</html>

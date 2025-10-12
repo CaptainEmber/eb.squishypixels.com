@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Emmett's Cool Webzone</title>
+  <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/randomcolor/randomColor.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.6.0/dist/aframe-extras.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/open-easyrtc@2.0.13/api/easyrtc.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/networked-aframe/networked-aframe@1.0.0/dist/networked-aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aframe-randomizer-components@3.0.2/dist/aframe-randomizer-components.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Force HTTPS -->
+  <script>
+  if (window.location.protocol !== 'https:') {
+    window.location.replace('https://' + window.location.hostname + window.location.pathname + window.location.search + window.location.hash);
+  }
+  </script>
+</head>
+<body>
+  <a-scene 
+    reflection="directionalLight:a-light#dirlight;" 
+    networked-scene="
+      room: basic-audio;
+      debug: true;
+      adapter: easyrtc;
+      audio: true;
+      serverURL: /;
+    ">
+    <!-- all the assets -->
+    <a-assets>
+      <a-asset-item id="longroom" src="mdl/theLongRoomV2.glb"></a-asset-item>
+      <a-asset-item id="longroomlightshafts" src="mdl/theLongRoomV1lightshafts.glb"></a-asset-item>
+      <img id="sky" src="img/clouds.jpg">
+      <img id="tutKeys" src="img/tutKeys.png">
+      <img id="tutMouse" src="img/tutMouse.png">
+      <img id="tutTap" src="img/tutTap.png">
+      <img id="tutLook" src="img/tutLook.png">
+    </a-assets>
+
+    <!-- Camera and controls -->
+    <a-entity id="cameraRig" movement-controls="fly: true; speed: 0.4;" wasd-controls-enabled="true" position="0 0 22">
+      <a-entity camera  position="0 1.6 0" look-controls >
+        <a-entity raycaster="objects: .clickable" cursor="rayOrigin: mouse"></a-entity>
+      </a-entity>
+    </a-entity>
+
+    <!-- Respectable in the Front -->
+    <a-entity id="longroomwrapper" position="0 0 -20" rotation="0 90 0">
+      <a-entity id="longroom" gltf-model="#longroom"></a-entity>
+      <a-entity text__text="align: center; height: 10; letterSpacing: 10; lineHeight: 10; tabSize: 5.35; value: Emmett Baber's Hall of Links; width: 10" position="-0.20351 6.20442 17.70315"></a-entity>
+      <!-- Commented for optimization? Transparent stuff is hard for mobile. <a-entity id="longroomlightrays" gltf-model="#longroomlightshafts" material="flatShading: true; blending: additive" position="0 0 0"></a-entity> -->
+
+      <a-image src="#tutKeys" position="-37.6 3 -3" rotation="0 -90 0" scale="1.5 1 1"></a-image>
+      <a-image src="#tutMouse" position="-37.6 3 3" rotation="0 -90 0" scale="1.5 1.5 1.5"></a-image>
+      <a-image src="#tutTap" position="-40 0.5 -0.75" rotation="-40 -90 0" scale="1 1.5 1"></a-image>
+      <a-image src="#tutLook" position="-39.8 0.8 0.75" rotation="-40 -90 0" scale="1 1.5 1"></a-image>
+
+      <!-- Always read the plaque. -->
+       <a-entity position="0 6 17.5" text__foo="align: center; height: 2; value: Emmett is a digital creative constantly trying to make something weird and wonderful. ; width: 2; wrapCount: 0;" geometry="primitive: plane; height: 0.3; width: 1.1" material="color: #ffb514"></a-entity>
+    
+      </a-entity>
+
+    <!--Links-->
+    <a-entity id="linkwrapperL" position="0 0 0">
+      <a-link id="viewerlink" class="clickable" href="viewer.html" position="-8 2 10" rotation="0 90 0" title="AR Collab Gallery"></a-link>
+      <a-link id="win95link" class="clickable" href="win95.html" position="-8 2 6" rotation="0 90 0" title="Vaporwave Lounge"></a-link>
+      <a-link id="archievis" class="clickable" href="https://ar.glimmer.tech/ConnleyCaves.html" position="-8 2 2" rotation="0 90 0" title="Connley Caves"></a-link>
+    </a-entity>
+
+    <a-entity id="linkwrapperR" position="0 0 0"></a-entity>
+    <a-link id="artstationlink" class="clickable" href="https://www.artstation.com/TawpShelf" position="8 2 10" rotation="0 -90 0" title="artstation"></a-link>
+    <a-link id="carrdlink" class="clickable" href="https://emmett.carrd.co/" position="8 2 6" rotation="0 90 0" title="Carrd Links"></a-link>
+    <a-link id="ytlink" class="clickable" href="https://www.youtube.com/@TawpShelf" position="8 2 2" rotation="0 90 0" title="YouTube"></a-link>
+    <a-link id="iglink" class="clickable" href="https://www.instagram.com/tawpshelf/" position="8 2 -2" rotation="0 90 0" title="Instagram"></a-link>
+
+    <!-- Sky & Lighting -->
+    <a-sky src="#sky"></a-sky>
+    <a-light id="dirlight" intensity="1" light="castShadow:true;type:directional" position="1 1 1"></a-light>
+    <a-light type="probe" envMap="#pan"></a-light>
+    <a-entity light="type: ambient; color: #555"></a-entity>
+
+    <!-- Avatar Template -->
+    <template id="avatar-template">
+      <a-entity>
+        <a-sphere id="head" radius="0.25"></a-sphere>
+        <a-sphere id="nose" radius="0.08" position="0 0.1 0.23" color="#fff"></a-sphere>
+        <a-sphere id="left-eye" radius="0.05" position="-0.08 0.18 0.22" color="#fff"></a-sphere>
+        <a-sphere id="right-eye" radius="0.05" position="0.08 0.18 0.22" color="#fff"></a-sphere>
+        <a-sphere id="left-pupil" radius="0.02" position="-0.08 0.18 0.27" color="#222"></a-sphere>
+        <a-sphere id="right-pupil" radius="0.02" position="0.08 0.18 0.27" color="#222"></a-sphere>
+        <a-entity id="mouth" geometry="primitive: torus; radius: 0.08; tube: 0.015; arc: 180" rotation="90 0 0" position="0 0.05 0.23" material="color: #f33"></a-entity>
+      </a-entity>
+    </template>
+  </a-scene>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      
+      /**
+       * Positional Playlist Component for A-Frame
+       * Manages a playlist for an entity with the 'sound' component.
+       */
+      AFRAME.registerComponent('playlist', {
+        schema: {
+          srcs: {type: 'selectorAll'},
+          loop: {type: 'boolean', default: true}
+        },
+
+        init: function () {
+          this.currentIndex = 0;
+          this.soundComponent = this.el.components.sound;
+
+          if (!this.soundComponent) {
+            console.error('Playlist component requires a sound component on the same entity.');
+            return;
+          }
+
+          // Start the first track if autoplay is on
+          if (this.soundComponent.data.autoplay) {
+              this.playTrack(0);
+          }
+
+          // Listen for when a track ends to play the next one
+          this.onTrackEnded = this.next.bind(this);
+          this.el.addEventListener('sound-ended', this.onTrackEnded);
+        },
+        
+        playTrack: function(index) {
+          if (!this.data.srcs[index]) {
+            console.error('Playlist track not found at index:', index);
+            return;
+          }
+          this.currentIndex = index;
+          const newSrc = this.data.srcs[this.currentIndex].getAttribute('src');
+          
+          // Set the new source on the sound component and play it
+          this.el.setAttribute('sound', 'src', newSrc);
+          this.soundComponent.playSound();
+          this.el.emit('playlist-track-changed', { index: this.currentIndex, src: newSrc });
+        },
+
+        toggle: function() {
+           if (this.soundComponent.isPlaying) {
+               this.soundComponent.pauseSound();
+           } else {
+               this.soundComponent.playSound();
+           }
+        },
+
+        next: function () {
+          let nextIndex = this.currentIndex + 1;
+          if (nextIndex >= this.data.srcs.length) {
+            if (this.data.loop) {
+              nextIndex = 0;
+            } else {
+              return; // End of playlist
+            }
+          }
+          this.playTrack(nextIndex);
+        },
+
+        remove: function () {
+          // Cleanup: remove event listener when component is detached
+          this.el.removeEventListener('sound-ended', this.onTrackEnded);
+        }
+      });
+      
+      /**
+       * Simple component to connect UI clicks to playlist actions.
+       */
+      AFRAME.registerComponent('playlist-control', {
+        schema: {
+          action: {type: 'string', oneOf: ['toggle', 'next']},
+          target: {type: 'selector', default: '#jukebox'}
+        },
+        init: function() {
+          this.el.addEventListener('click', () => {
+            const playlistComponent = this.data.target.components.playlist;
+            if (playlistComponent && typeof playlistComponent[this.data.action] === 'function') {
+              playlistComponent[this.data.action]();
+            }
+          });
+        }
+      });
+
+
+      // --- Your other components ---
+      AFRAME.registerComponent('random-avatar-color', {
+        init: function () {
+          var color = window.randomColor ? window.randomColor() : '#39c';
+          var head = this.el.querySelector('#head');
+          if (head) head.setAttribute('color', color);
+        }
+      });
+
+    });
+  </script>
+</body>
+</html>
+

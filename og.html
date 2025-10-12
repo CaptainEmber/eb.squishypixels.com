@@ -1,0 +1,844 @@
+<!-- Hey! Welcome to my new linktree. I tried to keep this all fairly readable 
+with comments like this one but if you are new to aframe and don't wanna 
+stare down a wall of text, check out https://aframe.io/ and https://glitch.com/
+Having a glitch account will let you start making projects, free hosting, and a way
+to edit all this html right quick. -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- I used a bunch of different pre-written modules to accomplish a lot of 
+the neat stuff in this project. -->
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <!-- Presentation Script to have a list of pre defined camera positions-->
+    <script src="https://unpkg.com/aframe-presentation-component/dist/aframe-presentation-component.min.js"></script>
+    <!-- 3D Text -->
+    <script src="https://unpkg.com/aframe-text-geometry-component@^0.5.0/dist/aframe-text-geometry-component.min.js"></script>
+    <!-- Clicky Link -->
+    <script src="https://unpkg.com/aframe-event-set-component@^4.0.0/dist/aframe-event-set-component.min.js"></script>
+    <!-- Aframe Extras -->
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
+    <!-- Layout Component to make pretty circles and grids-->
+    <script src="https://unpkg.com/aframe-layout-component@4.3.1/dist/aframe-layout-component.min.js"></script>
+    
+    <!-- Ensure HTTPS so that AR works -->
+    <script>
+      if (window.location.protocol == "http:")
+        window.location = "https://" + window.location.hostname;
+    </script>
+    <!-- Navigate on Click to link through to other bits -->
+    <script>
+      AFRAME.registerComponent("navigate-on-click", {
+        schema: {
+          url: { default: "" },
+        },
+
+        init: function () {
+          var data = this.data;
+          var el = this.el;
+
+          el.addEventListener("click", function () {
+            window.location.href = data.url;
+          });
+        },
+      });
+    </script>
+    <!-- Mouse Over Events to change colors and show interactions -->
+    <script>
+      AFRAME.registerComponent('listener', {
+  init: function() {
+    this.el.addEventListener('mouseenter', (e) => {
+      this.el.children[0].setAttribute('visible', 'true');
+    })
+    this.el.addEventListener('mouseleave', (e) => {
+      this.el.children[0].setAttribute('visible', 'false');
+    })
+  }
+})
+    </script>
+    <script>function loadScript(a){var b=document.getElementsByTagName("head")[0],c=document.createElement("script");c.type="text/javascript",c.src="https://tracker.metricool.com/resources/be.js",c.onreadystatechange=a,c.onload=a,b.appendChild(c)}loadScript(function(){beTracker.t({hash:"a8271ad987a3e1d4c1451b822bea1ce"})});</script>
+  </head>
+  
+<!-- This our whole scene. First we declare all the different assets we are using
+and where they live. Normally these would be short cute local paths to nearby files,
+but we are on glitch so we are calling all these assets via long URL's, and giving 
+them nicknames to call them into the scene. It's also convenient later if you wanna
+swap out a 3D model, you can just change what the nickname points to.-->
+  <body>
+    <a-scene background="color: #ECECEC">
+      <a-assets>
+        <a-asset-item
+          id="sword"
+          src="https://cdn.glitch.me/fb87a501-89b6-463a-9998-7e587696c7b0/Sword.glb?v=1639890682545"
+        ></a-asset-item>
+        <a-asset-item
+          id="camera"
+          src="https://cdn.glitch.me/fb87a501-89b6-463a-9998-7e587696c7b0/Camera.glb?v=1640115218357"
+        ></a-asset-item>
+        <a-asset-item
+          id="speechbubble"
+          src="https://cdn.glitch.me/fb87a501-89b6-463a-9998-7e587696c7b0/SpeechBubble.glb?v=1640119355223"
+        ></a-asset-item>
+        <a-asset-item
+          id="mecha"
+          src="https://cdn.glitch.me/fb87a501-89b6-463a-9998-7e587696c7b0/Mecha.glb?v=1639976849887"
+        ></a-asset-item>
+        <a-asset-item
+          id="castle"
+          src="https://cdn.glitch.me/fb87a501-89b6-463a-9998-7e587696c7b0/castle2.glb?v=1640186084928"
+        ></a-asset-item>
+        <a-asset-item
+          id="vrheadset"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/VRheadset2.glb?v=1642037279360"
+        ></a-asset-item>
+        <a-asset-item
+          id="triangle"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/TriangleTunnel.glb?v=1642095450551"
+        ></a-asset-item>
+        <a-asset-item
+          id="skullman"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/SkullmanBodyRolls2.glb?v=1645726360928"
+        ></a-asset-item>
+        
+        
+        <a-asset-item
+          id="fonttypewriter"
+          src="https://cdn.glitch.me/fb87a501-89b6-463a-9998-7e587696c7b0/Hungry%20Charlie%20Serif_Regular.json?v=1640043286228"
+        ></a-asset-item>
+        <img
+          id="emav"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/EmmettSmlAV.png?v=1642287650729"
+        />
+        <img
+          id="iglogo"
+          src="https://cdn.glitch.me/fb87a501-89b6-463a-9998-7e587696c7b0/IG.png?v=1640124885199"
+        />
+        <img
+          id="ytlogo"
+          src="https://cdn.glitch.me/fb87a501-89b6-463a-9998-7e587696c7b0/YT.png?v=1641321786725"
+        />
+        <img
+          id="cosplay1"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/27b9c76b.jpg?v=1641566510818"
+        />
+        <img
+          id="cosplay2"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/25e194c4.jpg?v=1641566508985"
+        />
+        <img
+          id="cosplay3"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/579e179c.jpg?v=1641587523063"
+        />
+        <img
+          id="cosplay4"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/IMG_20210722_001113_597.jpg?v=1641586913898"
+        />
+        <img
+          id="cosplay5"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/21418850.jpg?v=1641587515879"
+        />
+        <img
+          id="render1"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/VRchat.png?v=1641586935114"
+        />
+        <img
+          id="render2"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/VRchat2.png?v=1641586958561"
+        />
+        <img
+          id="render3"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/theViewFromMyParentsHouse2_Gen4v2.png?v=1641586922830"
+        />
+        <img
+          id="render4"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/v1.jpg?v=1641586940285"
+        />
+        <img
+          id="render5"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/ArchimotoV9_010.png?v=1641586984012"
+        />
+        <img
+          id="render6"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/ezgif-2-bf321f34335e.gif?v=1641586979234"
+        />
+        <img
+          id="render7"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/ezgif-2-059efca2c3d4.gif?v=1641586980140"
+        />
+        <img
+          id="aframe1"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/Shifting_Atlas.png?v=1641840361975"
+        />
+        <img
+          id="aframe2"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/fightertest.png?v=1641840362307"
+        />
+        <img
+          id="aframe3"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/flynnryanShowcase.png?v=1641840360377"
+        />
+        <img
+          id="aframe4"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/keroart.png?v=1641840361645"
+        />
+        <img
+          id="aframe5"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/brainframe.png?v=1642005610482"
+        />
+        <img
+          id="aframe6"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/JohnLorenGandalf.png?v=1641840363791"
+        />
+        <img
+          id="aframe7"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/WalkingMan.png?v=1641840362066"
+        />
+        <img
+          id="aframe8"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/AframeComic5.png?v=1642042477366"
+        />
+        <img
+          id="aframe9"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/1pxtransperent.png?v=1642035810368"
+        />
+        <img
+          id="resume"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/ResumeThumb.png?v=1697415229957"
+        />
+        <img
+          id="linktree"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/LinkTree2D.png?v=1675204186207"
+        />
+        <img
+          id="discord"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/discord-logo-png-7617.png?v=1675205959064"
+        />
+        <img
+          id="vrchat"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/kisspng-vrchat-virtual-reality-steam-video-game-virtual-wo-5b1f5cf01925d3.854620581528782064103.png?v=1675205971425"
+        />
+        <img
+          id="artstation"
+          src="https://cdn.glitch.global/fb87a501-89b6-463a-9998-7e587696c7b0/artstation-logo-vertical-white.png?v=1697415374419"
+        />
+      </a-assets>
+
+<!-- This is where the fun starts! So the background and camera get defined here.
+Then I have one massive wrapper to contain the whole scene if I need to move it around.
+I have found this helpful for AR stuff because the camera always starts at the world
+origin, (0,0,0) and you don't wanna spend a bunch of time re-aligning every little thing
+if you wanna make it more easily visible.-->
+      
+      <!-- Environment -->
+       
+      <!-- Camera -->
+        <a-entity position="0 0 0" rotation="0 0 0" camera="userHeight: 1.6" cursor="rayOrigin: mouse"></a-entity>
+      
+      <!-- Scene Wrapper -->
+      <a-entity id="everything" position="0 0 0" rotation="0 0 0" scale="1 1 1">
+       
+<!-- I use a series of smaller wrappers to -->
+        
+        <!-- Wiggler Wrapper-->
+        <a-entity
+          id="wigglerHolder"
+          position="0 5 0"
+          rotation="0 0 0"
+          scale="2 1 2"
+        >
+          <a-entity
+            id="wiggler1"
+            position="0 1 0"
+            rotation="0 0 0"
+            scale="1 1.25 1"
+          >
+            <a-tube
+              path="-5 10 0, 2 1.25 -10, 10 -2.5 -6, 10 -5 6, -5 -5 5, -5 -10 0"
+              radius="0.5"
+              animation="property: path; to: -5 10 0, -1 1.5 -10, 10 -3 -6, 10 -4 6, -5 -6 5, -5 -10 0; dur: 5000; easing: easeInOutQuad; loop: true; dir: alternate"
+              material="color: rgb(255,171,0)"
+            ></a-tube>
+          </a-entity>
+          <a-entity
+            id="wiggler2"
+            position="0 -2 0"
+            rotation="0 0 0"
+            scale="1.4 1 1.4"
+          >
+            <a-tube
+              path="-5 10 0, 2 1.25 -10, 10 -2.5 -6, 10 -5 6, -5 -5 5, -5 -10 0"
+              radius="0.6"
+              animation="property: path; to: -5 10 0, -1 1.5 -10, 10 -3 -6, 10 -4 6, -5 -6 5, -5 -10 0; dur: 7000; easing: easeInOutQuad; loop: true; dir: alternate"
+              material="color: rgb(207,0,255)"
+            ></a-tube>
+          </a-entity>
+          <a-entity
+            id="wiggler3"
+            position="0 -4 0"
+            rotation="0 0 0"
+            scale="1 .8 1"
+          >
+            <a-tube
+              path="-5 10 0, 2 1.25 -10, 10 -2.5 -6, 10 -5 6, -5 -5 5, -5 -10 0"
+              radius="0.5"
+              animation="property: path; to: -5 10 0, -1 1.5 -10, 10 -3 -6, 10 -4 6, -5 -6 5, -5 -10 0; dur: 11000; easing: easeInOutQuad; loop: true; dir: alternate"
+              material="color: #00FF08"
+            ></a-tube>
+          </a-entity>
+        </a-entity>
+        
+
+        <!-- zeroth frame -->
+        <a-entity id="wrapper0" position="0.1 1.25 -3">
+          <a-entity
+            id="bobber"
+            position="0 0 0"
+            animation="property: position; to: 0 .25 0; loop: true; dir:alternate; dur: 1000; easing: linear"
+          >
+            <a-entity
+              gltf-model="#sword"
+              position="-1 0 0"
+              rotation=" 0 0 0"
+              animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear;"
+            ></a-entity>
+          </a-entity>
+          <a-entity id="textholder" position="-.9 1.1 -1" rotation="0 0 0">
+            <a-image
+              src="#emav"
+              position=".5 1.1 0"
+              rotation="0 0 0"
+              scale="1 1 1"
+            ></a-image>
+            <a-entity
+              text-geometry="value: Emmett; font: #fonttypewriter"
+              position="0 0 0"
+              scale="1 1 1"
+              material="color: black; src: #texture"
+            >
+              <a-entity
+                text-geometry="value: Emmett;  font: #fonttypewriter;  bevelEnabled:  true;  bevelThickness:  0.01;  curveSegments:  6;  bevelSize:  0.1"
+                position="0 0 -.1"
+                rotation="0 0 0"
+                scale="1 1 1"
+                material="color: rgb(255,255,255); src: #texture;  shader:  flat"
+              ></a-entity>
+            </a-entity>
+            <a-entity
+              text-geometry="value: Baber; font: #fonttypewriter"
+              position=".1 -.5 0"
+              scale="1 1 1"
+              material="color: black; src: #texture"
+            >
+              <a-entity
+                text-geometry="value: Baber;  font: #fonttypewriter;  bevelEnabled:  true;  bevelThickness:  0.01;  curveSegments:  6;  bevelSize:  0.1"
+                position="0 0 -.1"
+                rotation="0 0 0"
+                scale="1 1 1"
+                material="color: rgb(255,255,255); src: #texture;  shader:  flat"
+              ></a-entity>
+            </a-entity>
+            <a-entity
+              text-geometry="value: Swipe or arrow key < >; font: #fonttypewriter"
+              position=".4 -.6 1.8"
+              scale=".2 .2 .2"
+              material="color: black; src: #texture"
+            >
+              <a-entity
+                text-geometry="value: Swipe or arrow key < >;  font: #fonttypewriter;  bevelEnabled:  true;  bevelThickness:  0.01;  curveSegments:  6;  bevelSize:  0.1"
+                position="0 0 -.1"
+                rotation="0 0 0"
+                scale="1 1 1"
+                material="color: rgb(255,255,255); src: #texture;  shader:  flat"
+              ></a-entity>
+              </a-entity>
+              <a-entity
+              text-geometry="value: emmettbaber@gmail.com; font: #fonttypewriter"
+              position=".25 -.75 1.8"
+              scale=".2 .2 .2"
+              material="color: black; src: #texture"
+            >
+              <a-entity
+                text-geometry="value: emmettbaber@gmail.com;  font: #fonttypewriter;  bevelEnabled:  true;  bevelThickness:  0.01;  curveSegments:  6;  bevelSize:  0.1"
+                position="0 0 -.1"
+                rotation="0 0 0"
+                scale="1 1 1"
+                material="color: rgb(255,255,255); src: #texture;  shader:  flat"
+              ></a-entity>
+            </a-entity>
+          </a-entity>
+        </a-entity>
+          
+
+        <!-- first frame -->
+        <a-entity id="wrapper1" position="2.5 1.25 -1.5" rotation="0 -60 0">
+          <a-entity
+            gltf-model="#vrheadset"
+            position=".1 1.075 0"
+            rotation="0 0 0"
+            scale=".25 .25 .25"
+            animation="property: rotation; to: 0 360 360; loop: true; dur: 5000; easing: linear;"
+          >
+          </a-entity>
+          <a-entity
+            text-geometry="value:1.) plays with aframe; font: #fonttypewriter"
+            position="-.6 .2 1"
+            rotation="0 0 0"
+            scale=".25 .25 .25"
+            material="color: rgb(0,0,0); src: #texture"
+          >
+            <a-entity
+              text-geometry="value:1.) plays with aframe;  font: #fonttypewriter;  bevelEnabled:  true;  bevelThickness:  0.01;  curveSegments:  6;  bevelSize:  0.1"
+              position="0 0 -.1"
+              rotation="0 0 0"
+              scale="1 1 1"
+              material="color: rgb(255,255,255); src: #texture; shader:  flat"
+            ></a-entity>
+            </a-entity>
+            
+            <a-entity
+            id="photospinner3"
+            position="-1 0 -2"
+            rotation="0 0 0"
+            scale="1 1 1"
+            
+          >
+            <a-entity
+              layout="type: box; columns:3; margin:1.2"
+              rotation="0 0 0"
+              scale="1 1 1"
+            >
+              <a-image
+                src="#aframe1"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                navigate-on-click="url:https://shiftingatlas.glitch.me/"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+              <a-image
+                src="#aframe2"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                navigate-on-click="url:http://fighter-test.glitch.me/"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+              <a-image
+                src="#aframe3"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                navigate-on-click="url:https://flynnryan-showcase.glitch.me/"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+              <a-image
+                src="#aframe4"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                navigate-on-click="url:https://keroart-flu.glitch.me/"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+              <a-image
+                src="#aframe9"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+              <a-image
+                src="#aframe5"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                navigate-on-click="url:https://brainframe.glitch.me/"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+              <a-image
+                src="#aframe6"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                navigate-on-click="url:https://johnloren-gandalf.glitch.me/"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+              <a-image
+                src="#aframe7"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                navigate-on-click="url:https://walkingman.glitch.me/"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+              <a-image
+                src="#aframe8"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                navigate-on-click="url:https://aframecomic5.glitch.me/#0"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+            </a-entity>
+          </a-entity>
+        </a-entity>        
+
+        <!-- second frame -->
+        <a-entity id="wrapper2" position="1.5 1.5 1" rotation="0 -120 0">
+          <a-entity
+            gltf-model="#castle"
+            position="0 0 0"
+            rotation="0 0 0"
+            scale=".25 .25 .25"
+            animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear;"
+          ></a-entity>
+          <a-entity
+            text-geometry="value:2.) learns tools; font: #fonttypewriter"
+            position="-.65 .8 .2"
+            rotation="0 0 0"
+            scale=".25 .25 .25"
+            material="color: rgb(0,0,0); src: #texture"
+          >
+            <a-entity
+              text-geometry="value:2.) learns tools;  font: #fonttypewriter;  bevelEnabled:  true;  bevelThickness:  0.01;  curveSegments:  6;  bevelSize:  0.1"
+              position="0 0 -.1"
+              rotation="0 0 0"
+              scale="1 1 1"
+              material="color: rgb(255,255,255); src: #texture; shader:  flat"
+            ></a-entity>
+          </a-entity>
+          
+          <a-entity
+            id="photospinner2"
+            position="0 0 -5"
+            rotation="0 0 0"
+            scale="2 2 2"
+            animation="property: rotation; to: 0 0 -360; loop: true; dur: 50000; easing: linear;"
+          >
+            <a-entity
+              layout="type: circle; radius: 1.7"
+              rotation="0 0 0"
+              scale=".8 .8 .8"
+            >
+              <a-image
+                src="#render1"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                animation="property: rotation; to: 0 0 360; loop: true; dur: 50000; easing: linear;"
+              ></a-image>
+              <a-image
+                src="#render2"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                animation="property: rotation; to: 0 0 360; loop: true; dur: 50000; easing: linear;"
+              ></a-image>
+              <a-image
+                src="#render3"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1.4 1 1"
+                animation="property: rotation; to: 0 0 360; loop: true; dur: 50000; easing: linear;"
+              ></a-image>
+              <a-image
+                src="#render4"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1.5 1"
+                animation="property: rotation; to: 0 0 360; loop: true; dur: 50000; easing: linear;"
+              ></a-image>
+              <a-image
+                src="#render5"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1.5 1 1"
+                animation="property: rotation; to: 0 0 360; loop: true; dur: 50000; easing: linear;"
+              ></a-image>
+              <a-image
+                src="#render6"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                animation="property: rotation; to: 0 0 360; loop: true; dur: 50000; easing: linear;"
+              ></a-image>
+              <a-image
+                src="#render7"
+                position="0 0 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                animation="property: rotation; to: 0 0 360; loop: true; dur: 50000; easing: linear;"
+              ></a-image>
+            </a-entity>
+          </a-entity>
+        </a-entity>
+
+        <!-- third frame -->
+        <a-entity id="wrapper3" position=".1 1.25 3" rotation="0 -180 0">
+          <a-entity
+            text-geometry="value:3.) records life; font: #fonttypewriter"
+            position="-.5 .2 1"
+            rotation="0 0 0"
+            scale=".25 .25 .25"
+            material="color: rgb(0,0,0); src: #texture"
+          >
+            <a-entity
+              text-geometry="value:3.) records life;  font: #fonttypewriter;  bevelEnabled:  true;  bevelThickness:  0.01;  curveSegments:  6;  bevelSize:  0.1"
+              position="0 0 -.1"
+              rotation="0 0 0"
+              scale="1 1 1"
+              material="color: rgb(255,255,255); src: #texture; shader:  flat"
+            ></a-entity>
+          </a-entity>
+          <a-entity
+            gltf-model="#camera"
+            position="0 0 0"
+            rotation="0 0 0"
+            scale=".25 .25 .25"
+            animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear;"
+          ></a-entity>
+          <a-entity
+            gltf-model="#speechbubble"
+            position="-.67 .95 0"
+            rotation="0 90 0"
+            scale=".25 .25 .25"
+            animation="property: position; to: -.7 1 0; loop: true; dur: 500; dir: alternate; easing: easeInOutQuad;"
+            navigate-on-click="url: https://www.instagram.com/tawpshelf/"
+            >
+            <a-image
+              src="#ytlogo"
+              position="-.2 1.2 0"
+              rotation="0 -90 0"
+              scale="1 .7 1"
+              event-set__enter="_event: mouseenter; color: #838383"
+              event-set__leave="_event: mouseleave; color: #FFFFFF"
+            ></a-image>
+          </a-entity>
+          <a-entity
+            gltf-model="#speechbubble"
+            position=".48 1 0"
+            rotation="0 -90 0"
+            scale=".25 .25 .25"
+            animation="property: position; to: .5 1.05 0; loop: true; dur: 400; dir: alternate; easing: easeInOutQuad;"
+            navigate-on-click="url: https://www.instagram.com/tawpshelf/?hl=en"
+            ><a-image
+              src="#iglogo"
+              position="0.2 1.2 0"
+              rotation="0 -90 0"
+              scale="1 1 1"
+              event-set__enter="_event: mouseenter; color: #838383"
+              event-set__leave="_event: mouseleave; color: #FFFFFF"
+            ></a-image
+          ></a-entity>
+          <a-entity
+            id="photospinner"
+            position="0 0 -5"
+            rotation=" 0 0 0"
+            scale="2 2 2"
+            animation="property: rotation; to: 0 0 360; loop: true; dur: 50000; easing: linear;"
+          >
+            <a-entity
+              layout="type: circle; radius: 1.5"
+              rotation="0 0 0"
+              scale="1 1 1"
+            >
+              <a-image
+                src="#cosplay1"
+                scale="1 1.5 1"
+                animation="property: rotation; to: 0 0 -360; loop: true; dur: 50000; easing: linear;"
+                navigate-on-click="url:https://www.instagram.com/bukkitbrown/?hl=en"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+              <a-image
+                src="#cosplay2"
+                scale="1 1.5 1"
+                animation="property: rotation; to: 0 0 -360; loop: true; dur: 50000; easing: linear;"
+                navigate-on-click="url:https://www.instagram.com/demonseamstress/"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+              <a-image
+                src="#cosplay3"
+                scale="1.5 1 1"
+                animation="property: rotation; to: 0 0 -360; loop: true; dur: 50000; easing: linear;"
+                navigate-on-click="url:https://www.instagram.com/hokage.kaiju.it/"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+              <a-image
+                src="#cosplay4"
+                scale="1 1.3 1"
+                animation="property: rotation; to: 0 0 -360; loop: true; dur: 50000; easing: linear;"
+                navigate-on-click="url:https://www.instagram.com/jackalope.briar/"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+              <a-image
+                src="#cosplay5"
+                scale="1 1.5 1"
+                animation="property: rotation; to: 0 0 -360; loop: true; dur: 50000; easing: linear;"
+                navigate-on-click="url:https://www.instagram.com/shifting_atlas/"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+            </a-entity>
+          </a-entity>
+        </a-entity>
+        
+        <!-- fourth frame -->
+        <a-entity id="wrapper4" position="-2 0 1.5" rotation="0 -240 0">
+          <a-entity
+            gltf-model="#skullman"
+            position="0 0 -1"
+            rotation="0 0 0"
+            scale="1.5 1.5 1.5"
+            animation="property: rotation; to: 0 360 0; loop: true; dur: 5000; easing: linear;"
+            animation-mixer
+          >     
+          </a-entity>
+          
+          <a-entity
+            text-geometry="value: View Avatars! (long load); font: #fonttypewriter"
+            position="-.5 1.5 .2"
+            rotation="0 0 0"
+            scale=".25 .25 .25"
+            material="color: rgb(0,0,0); src: #texture"
+            navigate-on-click="url:https://avlab.glitch.me/"
+          >
+            <a-entity
+              text-geometry="value: View Avatars!  (long load);  font: #fonttypewriter;  bevelEnabled:  true;  bevelThickness:  0.01;  curveSegments:  6;  bevelSize:  0.1"
+              position="0 0 -.1"
+              rotation="0 0 0"
+              scale="1 1 1"
+              material="color: rgb(255,255,255); src: #texture; shader:  flat"
+              navigate-on-click="url:https://avlab.glitch.me/"
+            ></a-entity>
+          </a-entity>
+        </a-entity>
+        
+        <!-- fifth frame -->
+        <a-entity id="wrapper5" position="-3 1.5 -1.5" rotation="0 -300 0">
+          <a-entity
+            text-geometry="value: Linktree & Resume; font: #fonttypewriter"
+            position="-.65 1.75 .2"
+            rotation="0 0 0"
+            scale=".25 .25 .25"
+            material="color: rgb(0,0,0); src: #texture"
+          >
+            <a-entity
+              text-geometry="value: Linktree & Resume;  font: #fonttypewriter;  bevelEnabled:  true;  bevelThickness:  0.01;  curveSegments:  6;  bevelSize:  0.1"
+              position="0 0 -.1"
+              rotation="0 0 0"
+              scale="1 1 1"
+              material="color: rgb(255,255,255); src: #texture; shader:  flat"
+            ></a-entity>
+          </a-entity>
+          
+         <a-image
+                src="#resume"
+                position=".65 .75 0"
+                rotation="0 0 0"
+                scale="1 1.5 1"
+                navigate-on-click="url:https://docs.google.com/document/d/1lOxFnmB2uyRLigWEbPEqK7EUhKOli_LpMOZT3VYgixI/edit?usp=sharing"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+          <a-image
+                src="#linktree"
+                position="-.5 .75 0"
+                rotation="0 0 0"
+                scale="1 1.5 1"
+                navigate-on-click="url:https://emmett.carrd.co/"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+          <a-image
+                src="#vrchat"
+                position="1 -.5 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                navigate-on-click="url:https://vrchat.com/home/user/usr_2b1187ed-7e9c-478e-afdd-1def58593f54"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+          <a-image
+                src="#discord"
+                position="0 -.5 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                navigate-on-click="url:https://discordapp.com/users/168884945622794240"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+          <a-image
+                src="#artstation"
+                position="-1 -.5 0"
+                rotation="0 0 0"
+                scale="1 1 1"
+                navigate-on-click="url:https://www.artstation.com/tawpshelf"
+                event-set__enter="_event: mouseenter; color: #838383"
+                event-set__leave="_event: mouseleave; color: #FFFFFF"
+              ></a-image>
+          
+        </a-entity>
+        
+
+        <!-- Camera Positions -->
+        <a-presentation>
+          <a-slide>
+            <a-slide-camera position="0 2 0" rotation="0 0 0"></a-slide-camera>
+          </a-slide>
+          <a-slide>
+            <a-slide-camera
+              position="0 2 0"
+              rotation="0 -60 0"
+            ></a-slide-camera>
+          </a-slide>
+          <a-slide>
+            <a-slide-camera
+              position="0 2 0"
+              rotation="0 -120 0"
+            ></a-slide-camera>
+          </a-slide>
+          <a-slide>
+            <a-slide-camera
+              position="0 2 0"
+              rotation="0 -180 0"
+              duration="1000"
+            ></a-slide-camera>
+          </a-slide>
+          <a-slide>
+            <a-slide-camera
+              position="0 2 0"
+              rotation="0 -240 0"
+              duration="1000"
+            ></a-slide-camera>
+          </a-slide>
+          <a-slide>
+            <a-slide-camera
+              position="0 2 0"
+              rotation="0 -300 0"
+              duration="1000"
+            ></a-slide-camera>
+          </a-slide>
+          <a-slide>
+            <a-slide-camera
+              position="0 2 0"
+              rotation="0 -360 0"
+              duration="1000"
+            ></a-slide-camera>
+          </a-slide>
+        </a-presentation> 
+      </a-entity>
+    </a-scene>
+  </body>
+</html>
+<!-- https://y.at/rat.crown.ghost.open-book -->

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Emmett's Cool Webzone</title>
+  <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/randomcolor/randomColor.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.6.0/dist/aframe-extras.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Force HTTPS -->
+  <script>
+  if (window.location.protocol !== 'https:') {
+    window.location.replace('https://' + window.location.hostname + window.location.pathname + window.location.search + window.location.hash);
+  }
+  </script>
+</head>
+<body>
+  <a-scene reflection="directionalLight:a-light#dirlight;">
+    <!-- all the assets -->
+    <a-assets>
+      <a-asset-item id="env" src="mdl/start_010.glb"></a-asset-item>
+      <a-asset-item id="dolphin" src="mdl/dolphin_05.glb"></a-asset-item>
+      <a-asset-item id="david" src="mdl/david_04.glb"></a-asset-item>
+      <a-asset-item id="palm" src="mdl/palms_01.glb"></a-asset-item>
+      <a-asset-item id="mac" src="mdl/macClassic_01.glb"></a-asset-item>
+      <a-asset-item id="EB" src="mdl/EmmettBaberWordArt_02.glb"></a-asset-item>
+      <a-asset-item id="longroom" src="mdl/theLongRoomV2.glb"></a-asset-item>
+      <a-asset-item id="longroomlightshafts" src="mdl/theLongRoomV1lightshafts.glb"></a-asset-item>
+      <img id="sky" src="img/clouds.jpg">
+      <a-cubemap id="pan">
+        <img src="img/panorama/px.jpg">
+        <img src="img/panorama/nx.jpg">
+        <img src="img/panorama/py.jpg">
+        <img src="img/panorama/ny.jpg">
+        <img src="img/panorama/pz.jpg">
+        <img src="img/panorama/nz.jpg">
+      </a-cubemap>
+      <img id="winamp" src="img/winamp.png">
+      <img id="winampPlay" src="img/winamp_play.png">
+      <img id="winampSkip" src="img/winamp_skip.png">
+      <video id="starfield" src="vid/starfield.mp4" autoplay="true" playsinline></video>
+      <!-- Playlist Songs: Your updated playlist -->
+      <audio id="song0" src="sfx/winamp.mp3" preload="auto"></audio>
+      <audio id="song1" src="sfx/Engelwood - Crust FM - 01 A New Feeling (feat. Flamingosis).mp3" preload="auto"></audio>
+      <audio id="song2" src="sfx/Engelwood - Crust FM - 02 Sand in the Potato Salad.mp3" preload="auto"></audio>
+      <audio id="song5" src="sfx/Engelwood - Crust FM - 05 Crystal Dolphin.mp3" preload="auto"></audio>
+      <audio id="song6" src="sfx/Engelwood - Crust FM - 06 Water Level.mp3" preload="auto"></audio>
+      <audio id="song7" src="sfx/Engelwood - Crust FM - 07 Reef.mp3" preload="auto"></audio>
+      <audio id="song8" src="sfx/Engelwood - Crust FM - 08 Always Thinking of You (Fear. Sophie Meiers).mp3" preload="auto"></audio>
+    </a-assets>
+
+    <!-- Camera and controls -->
+    <a-entity id="cameraRig" movement-controls="fly: true; speed: 0.2;" wasd-controls-enabled="true" position="4 0 -2">
+      <a-entity camera  position="0 1.6 0" look-controls >
+        <a-entity raycaster="objects: .clickable" cursor="rayOrigin: mouse"></a-entity>
+      </a-entity>
+    </a-entity>
+
+    <!-- Win95 in the back -->
+    <a-entity id="win95scenewrapper" position="0 0 0">
+      <a-entity id="floor" gltf-model="#env"></a-entity>
+      <a-entity id="dolphan" gltf-model="mdl/dolphin_05.glb" material="envMap: #pan; metalness: 1; roughness: 0" animation-mixer="clip: leap" position="15 1 -9"></a-entity>
+      <a-entity id="mickeyD" gltf-model="#david"></a-entity>
+      <a-entity id="palm" gltf-model="#palm"></a-entity>
+      <a-entity id="mac" gltf-model="#mac"></a-entity>
+      <a-entity id="EmmettBaber" gltf-model="#EB" position="-4 9 -15" scale="2 2 2" material="flatShading: true" animation="property: rotation; from: 0 -12 0; to: 0 12 0; dir: alternate; loop: true; dur: 1000"></a-entity>
+      <a-sphere id="orb" position="-20 3 -9" material="envMap: #pan; metalness: 1; roughness: 0" scale="8 8 8"></a-sphere>
+      <a-plane id="screensaver" position="20 5 -9" rotation="0 -90 0" geometry="height: 8; width: 10; segmentsHeight: 4; segmentsWidth: 5" material="shader: flat; src: #starfield" playsinline></a-plane>
+
+      <a-link id="viewerlink" class="clickable" href="viewer.html" position="-6 1 -12" rotation="0 90 0" title="AR Collab Gallery"></a-link>
+
+      <!-- This entity is now a positional jukebox. Walk away and the sound will fade! -->
+      <a-entity id="jukebox" position="-6 1.5 -20" sound="autoplay: true; rolloffFactor: 0.5; src:#song0; volume: 0.5" playlist="srcs: #song0, #song1, #song2, #song5, #song6, #song7, #song8" rotation="0 -60 0">
+        <a-plane id="winamp" src="#winamp" position="-0.07914 0 -0.1" rotation="0 90 0" scale="2 2.25 2"></a-plane>
+        <a-entity position="-0.05409 0 1.49561">
+          <a-entity id="playlist-controls" rotation="0 92.5894067353459 0">
+              <a-plane class="clickable" playlist-control="action: toggle" src="#winampPlay" material="side: double" scale="1 0.73 1"></a-plane>
+              <a-plane class="clickable" playlist-control="action: next" position="3.19734 0 0.09937" src="#winampSkip" material="side: double" scale="1 0.73 1"></a-plane>
+          </a-entity>
+        </a-entity>
+      </a-entity>
+    </a-entity>
+
+    <!-- Sky & Lighting -->
+    <a-sky src="#sky"></a-sky>
+    <a-light id="dirlight" intensity="1" light="castShadow:true;type:directional" position="1 1 1"></a-light>
+    <a-light type="probe" envMap="#pan"></a-light>
+    <a-entity light="type: ambient; color: #555"></a-entity>
+
+    <!-- Avatar Template -->
+    <template id="avatar-template">
+      <a-entity>
+        <a-sphere id="head" radius="0.25"></a-sphere>
+        <a-sphere id="nose" radius="0.08" position="0 0.1 0.23" color="#fff"></a-sphere>
+        <a-sphere id="left-eye" radius="0.05" position="-0.08 0.18 0.22" color="#fff"></a-sphere>
+        <a-sphere id="right-eye" radius="0.05" position="0.08 0.18 0.22" color="#fff"></a-sphere>
+        <a-sphere id="left-pupil" radius="0.02" position="-0.08 0.18 0.27" color="#222"></a-sphere>
+        <a-sphere id="right-pupil" radius="0.02" position="0.08 0.18 0.27" color="#222"></a-sphere>
+        <a-entity id="mouth" geometry="primitive: torus; radius: 0.08; tube: 0.015; arc: 180" rotation="90 0 0" position="0 0.05 0.23" material="color: #f33"></a-entity>
+      </a-entity>
+    </template>    
+  </a-scene>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      
+      /**
+       * Positional Playlist Component for A-Frame
+       * Manages a playlist for an entity with the 'sound' component.
+       */
+      AFRAME.registerComponent('playlist', {
+        schema: {
+          srcs: {type: 'selectorAll'},
+          loop: {type: 'boolean', default: true}
+        },
+
+        init: function () {
+          this.currentIndex = 0;
+          this.soundComponent = this.el.components.sound;
+
+          if (!this.soundComponent) {
+            console.error('Playlist component requires a sound component on the same entity.');
+            return;
+          }
+
+          // Start the first track if autoplay is on
+          if (this.soundComponent.data.autoplay) {
+              this.playTrack(0);
+          }
+
+          // Listen for when a track ends to play the next one
+          this.onTrackEnded = this.next.bind(this);
+          this.el.addEventListener('sound-ended', this.onTrackEnded);
+        },
+        
+        playTrack: function(index) {
+          if (!this.data.srcs[index]) {
+            console.error('Playlist track not found at index:', index);
+            return;
+          }
+          this.currentIndex = index;
+          const newSrc = this.data.srcs[this.currentIndex].getAttribute('src');
+          
+          // Set the new source on the sound component and play it
+          this.el.setAttribute('sound', 'src', newSrc);
+          this.soundComponent.playSound();
+          this.el.emit('playlist-track-changed', { index: this.currentIndex, src: newSrc });
+        },
+
+        toggle: function() {
+           if (this.soundComponent.isPlaying) {
+               this.soundComponent.pauseSound();
+           } else {
+               this.soundComponent.playSound();
+           }
+        },
+
+        next: function () {
+          let nextIndex = this.currentIndex + 1;
+          if (nextIndex >= this.data.srcs.length) {
+            if (this.data.loop) {
+              nextIndex = 0;
+            } else {
+              return; // End of playlist
+            }
+          }
+          this.playTrack(nextIndex);
+        },
+
+        remove: function () {
+          // Cleanup: remove event listener when component is detached
+          this.el.removeEventListener('sound-ended', this.onTrackEnded);
+        }
+      });
+      
+      /**
+       * Simple component to connect UI clicks to playlist actions.
+       */
+      AFRAME.registerComponent('playlist-control', {
+        schema: {
+          action: {type: 'string', oneOf: ['toggle', 'next']},
+          target: {type: 'selector', default: '#jukebox'}
+        },
+        init: function() {
+          this.el.addEventListener('click', () => {
+            const playlistComponent = this.data.target.components.playlist;
+            if (playlistComponent && typeof playlistComponent[this.data.action] === 'function') {
+              playlistComponent[this.data.action]();
+            }
+          });
+        }
+      });
+
+
+      // --- Your other components ---
+      AFRAME.registerComponent('random-avatar-color', {
+        init: function () {
+          var color = window.randomColor ? window.randomColor() : '#39c';
+          var head = this.el.querySelector('#head');
+          if (head) head.setAttribute('color', color);
+        }
+      });
+
+    });
+  </script>
+</body>
+</html>
+

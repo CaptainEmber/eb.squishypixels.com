@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery Room 2</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://unpkg.com/networked-aframe@^0.11.0/dist/networked-aframe.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a-scene networked-scene="room: gallery2; debug: true">
+    <a-entity id="cameraRig" networked="template:#avatar-template;attachTemplateToLocal:true" position="0 1.6 4">
+      <a-entity camera look-controls wasd-controls>
+        <a-entity cursor="fuse: true; fuseTimeout: 1500"
+                  position="0 0 -1"
+                  geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+                  material="color: white; shader: flat"
+                  animation__fusing="property: scale; startEvents: fusing; easing: easeInCubic; dur: 1500; from: 1 1 1; to: 0.1 0.1 0.1"
+                  animation__mouseleave="property: scale; startEvents: mouseleave; easing: easeInCubic; dur: 500; to: 1 1 1">
+        </a-entity>
+      </a-entity>
+    </a-entity>
+    <a-assets>
+      <a-asset-item id="sample2-glb" src="public/sample2.glb"></a-asset-item>
+    </a-assets>
+    <a-entity gltf-model="#sample2-glb" position="0 1 -3" scale="1 1 1"></a-entity>
+    <a-link href="index.html" title="Back to Main" position="-2 1 -3" color="#6B92FF"></a-link>
+    <template id="avatar-template">
+      <a-entity>
+        <a-sphere color="#randomColor" radius="0.25"></a-sphere>
+      </a-entity>
+    </template>
+  </a-scene>
+</body>
+</html>

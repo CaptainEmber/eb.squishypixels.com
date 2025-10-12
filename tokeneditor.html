@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLTF TTRPG Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the editor */
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar {
+            background-color: #1a202c; /* Equivalent to bg-gray-900 */
+        }
+        .sidebar-section {
+            background-color: #2d3748; /* Equivalent to bg-gray-800 */
+        }
+        .hierarchy-item {
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .hierarchy-item:hover {
+            background-color: #4a5568; /* Equivalent to bg-gray-600 */
+        }
+        .hierarchy-item.selected {
+            background-color: #4299e1; /* Equivalent to bg-blue-500 */
+            color: white;
+        }
+        input[type="number"], textarea, select {
+            background-color: #4a5568; /* bg-gray-700 */
+            border: 1px solid #718096; /* border-gray-500 */
+            color: white;
+        }
+         textarea.invalid {
+            border-color: #ef4444; /* red-500 */
+        }
+        /* Style for the file input button */
+        input[type="file"]::file-selector-button {
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        input[type="file"]::file-selector-button:hover {
+            background-color: #3182ce;
+        }
+        .tool-btn.active {
+            background-color: #4299e1; /* bg-blue-500 */
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body class="bg-gray-800 text-gray-200 antialiased">
+    <div id="app" class="flex flex-col md:flex-row h-screen w-screen overflow-hidden">
+
+        <!-- Left Sidebar -->
+        <div class="sidebar w-full md:w-80 p-4 overflow-y-auto h-auto md:h-full flex flex-col space-y-4">
+             <h1 class="text-2xl font-bold text-white text-center border-b border-gray-700 pb-2">GLTF Editor</h1>
+            
+            <!-- File Controls -->
+            <div class="sidebar-section p-3 rounded-lg">
+                <h2 class="text-lg font-semibold mb-2">Controls</h2>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1" for="model-file">Load Model (GLB/GLTF)</label>
+                        <input id="model-file" type="file" accept=".glb, .gltf" class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"/>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="new-scene-btn" class="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition">New Scene</button>
+                        <button id="export-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Export GLB</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tools -->
+            <div id="tools-section" class="sidebar-section p-3 rounded-lg hidden">
+                <h2 class="text-lg font-semibold mb-2">Tools</h2>
+                <div class="grid grid-cols-4 gap-2">
+                    <button id="select-tool" class="tool-btn bg-gray-600 p-2 rounded-md hover:bg-gray-500 transition" title="Select (No Gizmo)">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                    </button>
+                    <button id="translate-tool" class="tool-btn bg-gray-600 p-2 rounded-md hover:bg-gray-500 transition" title="Translate (Move)">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                    </button>
+                    <button id="rotate-tool" class="tool-btn bg-gray-600 p-2 rounded-md hover:bg-gray-500 transition" title="Rotate">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                           <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                           <path stroke-linecap="round" stroke-linejoin="round" d="M19.65 19.65A9 9 0 0012 3v1m3.65 2.35A9 9 0 0121 12h-1m-2.35 3.65A9 9 0 0112 21v-1m-3.65-2.35A9 9 0 003 12h1" />
+                        </svg>
+                    </button>
+                    <button id="scale-tool" class="tool-btn bg-gray-600 p-2 rounded-md hover:bg-gray-500 transition" title="Scale">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4m12 0h-4v4m0 8v4h4M4 16v4h4" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D Viewer -->
+        <div id="viewer-container" class="flex-grow h-1/2 md:h-full relative">
+            <canvas id="c"></canvas>
+            <div id="loader-overlay" class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+                <div class="text-white text-2xl">Loading...</div>
+            </div>
+             <div id="drop-zone" class="absolute inset-0 border-4 border-dashed border-gray-500 flex items-center justify-center pointer-events-none opacity-0 transition-opacity">
+                <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <p class="mt-2 text-2xl font-semibold text-gray-300">Drop GLB/GLTF file here</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="sidebar w-full md:w-96 p-4 overflow-y-auto h-1/2 md:h-full flex flex-col space-y-4">
+            <!-- Hierarchy -->
+            <div id="hierarchy-section" class="sidebar-section p-3 rounded-lg flex-grow flex flex-col hidden">
+                <h2 class="text-lg font-semibold mb-2">Object Hierarchy</h2>
+                <div id="hierarchy" class="overflow-y-auto flex-grow pr-2"></div>
+            </div>
+
+            <!-- Inspector -->
+            <div id="inspector-section" class="sidebar-section p-3 rounded-lg hidden">
+                <h2 id="inspector-title" class="text-lg font-semibold mb-3">Inspector</h2>
+                
+                <!-- Transform -->
+                <div class="space-y-3">
+                    <h3 class="font-medium text-md border-b border-gray-700 pb-1">Transform</h3>
+                    <!-- Position -->
+                    <div class="grid grid-cols-4 gap-2 items-center">
+                        <label class="text-sm">Pos</label>
+                        <input type="number" step="0.01" id="pos-x" class="w-full p-1 rounded-md text-center">
+                        <input type="number" step="0.01" id="pos-y" class="w-full p-1 rounded-md text-center">
+                        <input type="number" step="0.01" id="pos-z" class="w-full p-1 rounded-md text-center">
+                    </div>
+                    <!-- Rotation -->
+                    <div class="grid grid-cols-4 gap-2 items-center">
+                        <label class="text-sm">Rot</label>
+                        <input type="number" step="1" id="rot-x" class="w-full p-1 rounded-md text-center">
+                        <input type="number" step="1" id="rot-y" class="w-full p-1 rounded-md text-center">
+                        <input type="number" step="1" id="rot-z" class="w-full p-1 rounded-md text-center">
+                    </div>
+                    <!-- Scale -->
+                     <div class="grid grid-cols-4 gap-2 items-center">
+                        <label class="text-sm">Scl</label>
+                        <input type="number" step="0.01" id="scl-x" class="w-full p-1 rounded-md text-center">
+                        <input type="number" step="0.01" id="scl-y" class="w-full p-1 rounded-md text-center">
+                        <input type="number" step="0.01" id="scl-z" class="w-full p-1 rounded-md text-center">
+                    </div>
+                </div>
+
+                <!-- Extras/Schema -->
+                <div class="mt-4">
+                     <h3 class="font-medium text-md border-b border-gray-700 pb-1 mb-2">TTRPG Data (Extras)</h3>
+                     <div class="space-y-3">
+                        <div>
+                            <label for="schema-select" class="block text-sm font-medium text-gray-300 mb-1">Select Schema</label>
+                            <select id="schema-select" class="w-full p-2 rounded-md">
+                                <!-- Options will be populated by JS -->
+                            </select>
+                        </div>
+                        <button id="apply-schema-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition disabled:opacity-50 disabled:cursor-not-allowed">Apply Schema to Selected</button>
+                        <textarea id="extras-data" class="w-full h-32 mt-2 p-2 rounded-md bg-gray-900 text-xs font-mono"></textarea>
+                        <div id="extras-feedback" class="text-sm mt-1 h-4"></div>
+                        <button id="save-extras-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded transition">Save Extras</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.157.0/examples/jsm/"
+      }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+        import { TransformControls } from 'three/addons/controls/TransformControls.js';
+
+        let camera, scene, renderer, controls, transformControls;
+        let selectedObject = null;
+        let boxHelper;
+        let loadedModel = null;
+        let selectedSchemaKey = "Basic";
+
+        const schemas = {
+            "Basic": {
+                "name": "New Object",
+                "description": "A basic object.",
+                "type": "item"
+            },
+            "FIST": {
+              "name": "Ember The Red",
+              "description": "A crimson-clad wizard who wields great and terrible magic.",
+              "type": "character", "hp": 6, "maxhp": 6, "armor": 0, "war_dice": 0, "forceful": 0,
+              "tactical": 0, "creative": 0, "reflexive": 0, "dmg_dice": 0, "dmg_bonus": 0
+            }
+        };
+        
+        // DOM Elements
+        const canvas = document.querySelector('#c');
+        const hierarchyContainer = document.querySelector('#hierarchy');
+        const modelFileInput = document.querySelector('#model-file');
+        const newSceneBtn = document.querySelector('#new-scene-btn');
+        const exportBtn = document.querySelector('#export-btn');
+        const schemaSelect = document.querySelector('#schema-select');
+        const applySchemaBtn = document.querySelector('#apply-schema-btn');
+        const extrasTextarea = document.querySelector('#extras-data');
+        const saveExtrasBtn = document.querySelector('#save-extras-btn');
+        const extrasFeedback = document.querySelector('#extras-feedback');
+        const inspectorSection = document.querySelector('#inspector-section');
+        const hierarchySection = document.querySelector('#hierarchy-section');
+        const inspectorTitle = document.querySelector('#inspector-title');
+        const dropZone = document.querySelector('#drop-zone');
+        const viewerContainer = document.querySelector('#viewer-container');
+        const toolsSection = document.querySelector('#tools-section');
+        const toolButtons = {
+            select: document.querySelector('#select-tool'),
+            translate: document.querySelector('#translate-tool'),
+            rotate: document.querySelector('#rotate-tool'),
+            scale: document.querySelector('#scale-tool'),
+        };
+        const inputs = {
+            pos: { x: document.querySelector('#pos-x'), y: document.querySelector('#pos-y'), z: document.querySelector('#pos-z') },
+            rot: { x: document.querySelector('#rot-x'), y: document.querySelector('#rot-y'), z: document.querySelector('#rot-z') },
+            scl: { x: document.querySelector('#scl-x'), y: document.querySelector('#scl-y'), z: document.querySelector('#scl-z') },
+        };
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x334155);
+            camera = new THREE.PerspectiveCamera(45, viewerContainer.clientWidth / viewerContainer.clientHeight, 0.1, 100);
+            camera.position.set(2, 2, 5);
+            renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+            renderer.setSize(viewerContainer.clientWidth, viewerContainer.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+            dirLight.position.set(5, 10, 7.5);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.target.set(0, 0.5, 0);
+            controls.update();
+            controls.enableDamping = true;
+            transformControls = new TransformControls(camera, renderer.domElement);
+            transformControls.addEventListener('objectChange', () => { if (boxHelper.visible) { boxHelper.update(); } });
+            transformControls.addEventListener('dragging-changed', (event) => { controls.enabled = !event.value; });
+            transformControls.addEventListener('mouseUp', () => { updateTransformInputs(); });
+            scene.add(transformControls);
+            boxHelper = new THREE.BoxHelper(new THREE.Object3D(), 0xffff00);
+            boxHelper.visible = false;
+            scene.add(boxHelper);
+            const plane = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshStandardMaterial({ color: 0x475569 }));
+            plane.rotation.x = -Math.PI / 2;
+            plane.receiveShadow = true;
+            scene.add(plane);
+            window.addEventListener('resize', onWindowResize);
+            setupEventListeners();
+            populateSchemaDropdown();
+            animate();
+        }
+
+        function populateSchemaDropdown() {
+            for (const key in schemas) {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = key;
+                schemaSelect.appendChild(option);
+            }
+            schemaSelect.value = selectedSchemaKey;
+        }
+
+        function setupEventListeners() {
+            modelFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) loadModel(URL.createObjectURL(file));
+            });
+            newSceneBtn.addEventListener('click', newScene);
+            viewerContainer.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.opacity = '1'; });
+            viewerContainer.addEventListener('dragleave', () => { dropZone.style.opacity = '0'; });
+            viewerContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.style.opacity = '0';
+                const file = e.dataTransfer.files[0];
+                if (file) loadModel(URL.createObjectURL(file));
+            });
+            exportBtn.addEventListener('click', exportGLB);
+            
+            schemaSelect.addEventListener('change', (e) => {
+                selectedSchemaKey = e.target.value;
+            });
+
+            applySchemaBtn.addEventListener('click', () => {
+                if (selectedObject) {
+                    extrasTextarea.value = JSON.stringify(schemas[selectedSchemaKey], null, 2);
+                    validateExtrasInput();
+                }
+            });
+
+            saveExtrasBtn.addEventListener('click', () => {
+                if (!selectedObject) return;
+                try {
+                    selectedObject.userData = JSON.parse(extrasTextarea.value);
+                    extrasFeedback.textContent = "Extras saved!";
+                    extrasFeedback.classList.add('text-green-400');
+                    setTimeout(() => extrasFeedback.textContent = '', 2000);
+                } catch(e) {
+                    extrasFeedback.textContent = "Invalid JSON format.";
+                    extrasFeedback.classList.add('text-red-400');
+                }
+            });
+            extrasTextarea.addEventListener('input', validateExtrasInput);
+            Object.keys(toolButtons).forEach(key => {
+                if(toolButtons[key]) toolButtons[key].addEventListener('click', () => setTool(key));
+            });
+            ['x', 'y', 'z'].forEach(axis => {
+                inputs.pos[axis].addEventListener('input', (e) => { if (selectedObject) selectedObject.position[axis] = parseFloat(e.target.value); });
+                inputs.rot[axis].addEventListener('input', (e) => { if (selectedObject) selectedObject.rotation[axis] = THREE.MathUtils.degToRad(parseFloat(e.target.value)); });
+                inputs.scl[axis].addEventListener('input', (e) => { if (selectedObject) selectedObject.scale[axis] = parseFloat(e.target.value); });
+            });
+        }
+        
+        function newScene() {
+            if (loadedModel) {
+                scene.remove(loadedModel);
+            }
+            loadedModel = null;
+            selectObject(null); // This detaches controls and hides inspector
+            hierarchyContainer.innerHTML = '';
+            toolsSection.classList.add('hidden');
+            hierarchySection.classList.add('hidden');
+            exportBtn.disabled = true;
+            modelFileInput.value = ''; // Reset file input to allow loading the same file again
+        }
+
+        function validateExtrasInput() {
+            try {
+                JSON.parse(extrasTextarea.value);
+                extrasTextarea.classList.remove('invalid');
+                extrasFeedback.textContent = '';
+            } catch (e) {
+                extrasTextarea.classList.add('invalid');
+                extrasFeedback.textContent = "Invalid JSON format.";
+                extrasFeedback.classList.add('text-red-400');
+            }
+        }
+
+        function setTool(toolName) {
+            Object.values(toolButtons).forEach(btn => btn.classList.remove('active'));
+            if(toolButtons[toolName]) toolButtons[toolName].classList.add('active');
+            if (!selectedObject) return;
+            if (toolName === 'select') {
+                transformControls.detach();
+                const box = new THREE.Box3().setFromObject(selectedObject);
+                boxHelper.visible = !box.isEmpty();
+            } else {
+                boxHelper.visible = false;
+                transformControls.setMode(toolName);
+                transformControls.attach(selectedObject);
+            }
+        }
+
+        function loadModel(url) {
+            const loader = new GLTFLoader();
+            document.querySelector('#loader-overlay').classList.remove('hidden');
+            
+            loader.load(url, (gltf) => {
+                const parser = gltf.parser;
+                gltf.scene.traverse(object => {
+                    const association = parser.associations.get(object);
+                    if (association && association.type === 'nodes') {
+                        const nodeDef = parser.json.nodes[association.index];
+                        if (nodeDef && nodeDef.extras) {
+                            Object.assign(object.userData, nodeDef.extras);
+                        }
+                    }
+                });
+
+                const newModel = gltf.scene;
+
+                if (!loadedModel) { // First model in the scene
+                    loadedModel = newModel;
+                    scene.add(loadedModel);
+                } else { // Add as a child to the selected object, or the root model if nothing is selected
+                    const parent = selectedObject || loadedModel;
+                    parent.add(newModel);
+                }
+                
+                rebuildHierarchy();
+
+                exportBtn.disabled = false;
+                hierarchySection.classList.remove('hidden');
+                toolsSection.classList.remove('hidden');
+                document.querySelector('#loader-overlay').classList.add('hidden');
+
+            }, undefined, (error) => {
+                console.error(error);
+                alert("Failed to load model.");
+                document.querySelector('#loader-overlay').classList.add('hidden');
+            });
+        }
+
+        function rebuildHierarchy() {
+            if (!loadedModel) return;
+            hierarchyContainer.innerHTML = '';
+            buildHierarchy(loadedModel, hierarchyContainer, 0);
+
+            if (selectedObject) {
+                 const selectedElement = hierarchyContainer.querySelector(`[data-uuid="${selectedObject.uuid}"]`);
+                 if (selectedElement) selectedElement.classList.add('selected');
+            }
+        }
+
+        function buildHierarchy(object, container, depth) {
+            const item = document.createElement('div');
+            item.classList.add('hierarchy-item');
+            item.style.paddingLeft = `${depth * 16 + 8}px`;
+            let icon = object.isMesh ? '🎨' : '📦';
+            item.innerHTML = `<span>${icon}</span> ${object.name || object.type}`;
+            item.dataset.uuid = object.uuid;
+            item.addEventListener('click', (e) => { e.stopPropagation(); selectObject(object); });
+            container.appendChild(item);
+            object.children.forEach(child => buildHierarchy(child, container, depth + 1));
+        }
+
+        function selectObject(object) {
+            selectedObject = object;
+            document.querySelectorAll('.hierarchy-item').forEach(el => {
+                el.classList.toggle('selected', el.dataset.uuid === object?.uuid);
+            });
+            if (object) {
+                const box = new THREE.Box3().setFromObject(object);
+                if (!box.isEmpty()) {
+                    boxHelper.setFromObject(object);
+                }
+                
+                inspectorSection.classList.remove('hidden');
+                inspectorTitle.textContent = `Inspector: ${object.name || object.type}`;
+                updateTransformInputs();
+                updateExtrasTextarea();
+                applySchemaBtn.disabled = !object;
+                setTool('translate');
+            } else {
+                boxHelper.visible = false;
+                inspectorSection.classList.add('hidden');
+                transformControls.detach();
+                updateExtrasTextarea();
+                applySchemaBtn.disabled = true;
+            }
+        }
+        
+        function updateTransformInputs() {
+            if (!selectedObject) return;
+            ['x', 'y', 'z'].forEach(axis => {
+                inputs.pos[axis].value = selectedObject.position[axis].toFixed(3);
+                inputs.rot[axis].value = THREE.MathUtils.radToDeg(selectedObject.rotation[axis]).toFixed(1);
+                inputs.scl[axis].value = selectedObject.scale[axis].toFixed(3);
+            });
+        }
+
+        function updateExtrasTextarea() {
+            extrasTextarea.value = selectedObject ? JSON.stringify(selectedObject.userData, null, 2) : '';
+            validateExtrasInput();
+        }
+
+        function exportGLB() {
+            if (!loadedModel) {
+                alert("No model to export.");
+                return;
+            }
+            const exporter = new GLTFExporter();
+            const options = { binary: true, onlyVisible: false };
+            exporter.parse(loadedModel, (result) => saveArrayBuffer(result, 'edited-model.glb'), (error) => console.error('An error happened during parsing', error), options);
+        }
+
+        function saveArrayBuffer(buffer, fileName) {
+            const blob = new Blob([buffer], { type: 'application/octet-stream' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+        }
+
+        function onWindowResize() {
+            camera.aspect = viewerContainer.clientWidth / viewerContainer.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(viewerContainer.clientWidth, viewerContainer.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
