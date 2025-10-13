@@ -1,287 +1,374 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>3Dvtt</title>
-    <meta name="description" content="A free, web based, virtual tabletop."/>
-    <meta name="keywords" content="ttrpg, D&D, DnD, VTT, Virtual Tabletop">
-    <meta name="author" content="Emmett Baber">
-    <link rel="stylesheet" href="styles.css">
+<head>
+    <title>3D Virtual Tabletop</title>
+    <meta name="description" content="A 3D Virtual Tabletop for TTRPGs with real-time collaboration.">
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Faker/3.1.0/faker.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/networked-aframe/networked-aframe@1.0.0/dist/networked-aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-gltf-part-component@1.0.1/index.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .draggable {
+            cursor: move;
+        }
+        #inspector {
+            transition: transform 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white overflow-hidden">
+    <!-- Main Container -->
+    <div class="flex h-screen">
+        <!-- A-Frame Scene -->
+        <div class="flex-grow h-screen">
+            <a-scene id="scene" embedded>
+                <!-- NAF Schema -->
+                <a-assets>
+                    <template id="player-template">
+                        <a-entity class="player" networked-gltf-model>
+                            <a-gltf-model></a-gltf-model>
+                            <a-entity class="nametag" text="align: center; value: Player;" position="0 2.2 0" scale="3 3 3"></a-entity>
+                        </a-entity>
+                    </template>
+                     <template id="token-template">
+                        <a-entity class="token" networked-gltf-model gltf-part="src: #qmark" scale="0.5 0.5 0.5">
+                        </a-entity>
+                    </template>
+                    <a-asset-item id="qmark" src="/mdl/questionmark.glb"></a-asset-item>
+                </a-assets>
 
-    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.slim.js"></script>
-    <script src="/easyrtc/easyrtc.js"></script>
-    <script src="https://unpkg.com/networked-aframe@^0.12.0/dist/networked-aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-randomizer-components@3.0.2/dist/aframe-randomizer-components.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-environment-component@1.3.7/dist/aframe-environment-component.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.4.0/dist/aframe-extras.min.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/network-templates.js"></script>
-    <script src="js/player-info.js"></script>
-    <script src="js/spawn-in-circle.component.js"></script>
-    <script src="js/spawner-persistent.component.js"></script>
-    <script src="js/persistent-p2p.component.js"></script>
-    <script src="js/dungeonspawner.js"></script>
-    <script src="js/beholder-controls.js"></script>
-    <script src="js/token-selector.js"></script>
-    <script src="js/button-logic.js"></script>
-    <script src="js/token-interaction.js"></script>
-  </head>
-  
-  <!-- This is the body. The a-scene tag is where you can change the background color. -->
-  <body>
-    <a-scene
-      background="color: grey"
-      persistent-p2p
-      networked-scene="
-        room: integrated-experience;
-        debug: true;
-        adapter: wseasyrtc;
-        audio: true;"
-      renderer="physicallyCorrectLights: true;"
-      cursor="rayOrigin: mouse"
-      raycaster="objects:.raycastable"
-    >
-      <!-- This is the where we define things we use in our scenes. Each asset you want to bring into your scene needs to be defined here. https://aframe.io/docs/1.6.0/core/asset-management-system.html#main -->
-      <a-assets>
-        <template id="beholder-template">
-          <a-entity class="avatar" player-info>
-            <a-entity
-              class="head"
-              networked-audio-source
-              gltf-model="#beholderModel"
-              scale=".25 .25 .25"
-              rotation="0 0 0"
-              position="0 -.5 0"
-              material="color:#FFFFFF"
-            ></a-entity>
-            <a-text
-              class="nametag"
-              value="?"
-              rotation="0 180 0"
-              position="0 .85 0"
-              side="double"
-              align="center"
-              scale=".5 .5 .5"
-              geometry="primitive: plane; width: auto; height: auto; side: double"
-              material="color: #eee; opacity: .5"
-            ></a-text>
-          </a-entity>
-        </template>
+                <!-- Player Avatar -->
+                <a-entity id="player" networked="template:#player-template;attachTemplateToLocal:false;" camera="user-height: 1.6" wasd-controls look-controls>
+                    <a-gltf-model id="player-model" visible="false" src="/mdl/beholderedit_v2.glb" position="0 -1.6 0"></a-gltf-model>
+                    <a-entity class="nametag" text="value: You; align: center;" position="0 0.8 -2"></a-entity>
+                </a-entity>
+                
+                <!-- Environment -->
+                <a-plane id="ground" position="0 0 -4" rotation="-90 0 0" width="20" height="20" color="#4D5D55" shadow></a-plane>
+                <a-sky color="#111827"></a-sky>
+                <a-light type="ambient" color="#888"></a-light>
+                <a-light type="point" intensity="0.5" position="2 4 4"></a-light>
+            </a-scene>
+        </div>
 
-        <template id="token-template">
-          <a-entity class="token" token-interaction></a-entity>
-        </template>
-      
-        <a-asset-item
-          id="beholderModel"
-          src="https://cdn.glitch.global/86fd29b1-4d6c-4dbb-b735-00c644907515/beholderedit_v2.glb?v=1724775631179"
-        ></a-asset-item>
-        <a-asset-item
-          id="goblinModel"
-          src="https://cdn.glitch.global/86fd29b1-4d6c-4dbb-b735-00c644907515/GoblinToken3.glb?v=1720442465141"
-        ></a-asset-item>
-        <a-asset-item
-          id="questionmark"
-          src="https://cdn.glitch.global/86fd29b1-4d6c-4dbb-b735-00c644907515/questionmark.glb?v=1724628265718"
-        ></a-asset-item>
-        <a-asset-item
-          id="Emmett"
-          src="https://cdn.glitch.global/86fd29b1-4d6c-4dbb-b735-00c644907515/EmmettWizardToken2.glb?v=1738355339425"
-        ></a-asset-item>        
-        w
-        <!-- Stuff for the scene! -->
-        <a-asset-item id="tree" src="https://cdn.glitch.global/86fd29b1-4d6c-4dbb-b735-00c644907515/autumnTree2.glb?v=1737350036310"></a-asset-item>
-        <img id="stars" src="https://cdn.glitch.global/86fd29b1-4d6c-4dbb-b735-00c644907515/nightsky.jpg?v=1737267842880">
-      </a-assets>
+        <!-- UI Panels -->
+        <div class="absolute top-0 left-0 p-4 z-10">
+            <div id="ui-controls" class="bg-gray-800 bg-opacity-80 rounded-lg p-4 space-y-4">
+                <h2 class="text-xl font-bold">Dungeon Master</h2>
+                <div class="flex flex-col space-y-2">
+                    <button id="add-token-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all">Add Token</button>
+                    <div id="dm-tools" class="hidden">
+                        <label for="player-select" class="block text-sm font-medium">Assign to Player:</label>
+                        <select id="player-select" class="bg-gray-700 border border-gray-600 rounded-md p-2 w-full mt-1">
+                            <option value="">DM (default)</option>
+                        </select>
+                        <button id="assign-owner-btn" class="mt-2 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all">Assign</button>
+                    </div>
+                </div>
+            </div>
+             <div id="connection-status" class="mt-4 bg-gray-800 bg-opacity-80 rounded-lg p-2 text-center">
+                <p class="text-sm">Status: <span id="status-text" class="font-semibold text-yellow-400">Connecting...</span></p>
+                <p class="text-xs">Your ID: <span id="my-id"></span></p>
+            </div>
+        </div>
 
-      <!-- The Beholder Player -->
-      <a-entity
-        id="player"
-        camera
-        networked="template:#beholder-template;attachTemplateToLocal:false;"
-        position="0 2 0"
-        spawner-persistent="template:#token-template"
-        look-controls="enabled: true" 
-        beholder-controls
-        raycaster="far: 1000; showLine: false"
-      >
-        <a-entity id="cursor"
-            cursor
-            position="0 0 -.1"
-            geometry="primitive: ring; radiusInner: 0.001; radiusOuter: 0.002"
-            material="color: black; shader: flat; opacity: .5"
-            hide-on-enter-vr>
-        </a-entity>
-        <a-entity id="grabber"
-            position="0 0 -1"
-            geometry="primitive: ring; radiusInner: 0.001; radiusOuter: 0.002"
-            material="color: red; shader: flat; opacity: .5"
-            hide-on-enter-vr>
-        </a-entity>
-        <a-entity id="leftHand" hand-tracking-grab-controls="hand: left;"></a-entity>
-        <a-entity id="rightHand" hand-tracking-grab-controls="hand: right;"></a-entity>
-      </a-entity>
-  
-      <!--                 />                                             -->
-      <!--   (           //-------------------------------------(         -->       
-      <!--  (*)OXOXOXOXO(*>======================================\        -->
-      <!--   (           \\---------------------------------------)       -->
-      <!--                \>                    OUR SCENE                 -->
-      
-      <!-- THA BAHTULGRIDH --> 
-      <a-grid
-        position=".5 0 .5"
-        material="alphaTest: 0.9; depthTest: true; blending: normal; src: https://cdn.glitch.global/3249eb5b-d053-482d-9edf-98e70608d9ad/output-onlinepngtools.png?v=1719102850217"
-      ></a-grid>
-      
-      <a-gltf-model src="#tree" position="0.4 0 -5" rotation="0 225 0" scale="5 5 5"></a-gltf-model>
-      
-      <a-sky src="#stars" rotation="0 150 0"></a-sky>
-
-      <!--                           ___                                                          -->
-      <!--                          ( ((                                                          -->
-      <!--                           ) ))                                                         -->
-      <!--  .::.                    / /(                                                          -->
-      <!-- 'o .-;-.-.-.-.-.-.-.-.-/| ((::::::::::::::::::::::::::::::::::::::::::::::.._          -->
-      <!--(O ( ( ( ( ( ( ( ( ( ( ( |  ))   -====================================-      _.>        -->
-      <!-- `o `-;-`-`-`-`-`-`-`-`-\| ((::::::::::::::::::::::::::::::::::::::::::::::''           -->
-      <!--  `::'                    \ \(                                                          -->
-      <!--                           ) ))                                                         -->
-      <!--                          (_((                                                          -->
-    </a-scene>
-      
-    <!--  UI AND BUTTONS AND THINGS -->
-    <div id="buttons">
-      <button id="helpButton">❓</button>
-      <button id="optionsButton">⚙️</button>
-      <button id="tokenButton">👺</button>
-      <button id="sceneButton">📜</button>
-      <button id="chatButton">💬</button>
-      <button id="movementButton">🕹️</button>
+        <!-- Inspector Panel -->
+        <div id="inspector" class="absolute right-0 top-0 h-full bg-gray-800 bg-opacity-90 shadow-2xl p-6 w-96 transform translate-x-full z-20 overflow-y-auto">
+            <button id="close-inspector" class="absolute top-4 right-4 text-gray-400 hover:text-white">&times;</button>
+            <h3 class="text-2xl font-bold mb-6">Token Inspector</h3>
+            <div id="inspector-content" class="space-y-4">
+                <!-- Content will be dynamically generated -->
+                <p class="text-gray-400">Select a token to inspect its properties.</p>
+            </div>
+        </div>
     </div>
 
-    <div id="panel">
-      <div id="helpPanel">
-        <h2>Welcome to 3DnD!</h2>
-        <p>An open, creative, VTT.</p>
-        <ul>
-          <li>❓ help! (this)</li>
-          <li>⚙️ change name and color</li>
-          <li>👺 spawn tokens</li>
-          <li>💬 to chat</li>
-          <li>🕹️ movement controls</li>
-          <li>📜 scene description</li>
-        </ul>
-        <h3>Controls:</h3>
-        <ul>
-          <li>WASD or Arrow Keys: Move</li>
-          <li>Mouse Look or Touch Drag: Look Around</li>
-          <li>Click + Drag (Desktop): Grab Objects</li>
-        </ul>
-        <p>
-          Become my boss!<br>
-          <a href="https://patreon.com/vertiseize?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink"
-            ><img
-              alt="Patreon time!"
-              src="https://cdn.glitch.global/86fd29b1-4d6c-4dbb-b735-00c644907515/patreon.png?v=1738357294074"
-              style="width: 50px"
-          /></a><br>
-          Remix your own here:
-          <a href="https://glitch.com/edit/#!/remix/3dvtt"
-            ><img
-              alt="Remix on Glitch"
-              src="https://cdn.gomix.com/f3620a78-0ad3-4f81-a271-c8a4faa20f86%2Fremix-button.svg"
-          /></a>
-        </p>
-      </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sceneEl = document.querySelector('a-scene');
+            const statusText = document.getElementById('status-text');
+            const myIdSpan = document.getElementById('my-id');
+            const addTokenBtn = document.getElementById('add-token-btn');
+            const inspector = document.getElementById('inspector');
+            const inspectorContent = document.getElementById('inspector-content');
+            const closeInspectorBtn = document.getElementById('close-inspector');
+            const playerSelect = document.getElementById('player-select');
+            const assignOwnerBtn = document.getElementById('assign-owner-btn');
+            const dmTools = document.getElementById('dm-tools');
 
-      <div id="optionsPanel" style="display: none;">
-        Color and Name
-        <button
-          id="color-changer"
-          style="z-index: 100"
-          onclick="let newColor = window.ntExample.randomColor();
-                 document.getElementById('player').setAttribute('player-info', 'color', newColor); 
-                 document.querySelector('#color-changer').style.backgroundColor = newColor;
-                 document.querySelector('#color-changer').style.color = newColor;
-        "
-        >
-          ■
-        </button>
-        <input
-          id="username-overlay"
-          style="z-index: 100"
-          oninput="document.getElementById('player').setAttribute('player-info', 'name', this.value)"
-        />
-        <br>
-        Player Model URL:
-        <input
-          id="player-model-url"
-          style="z-index: 100"
-          oninput="document.getElementById('player').setAttribute('player-controls', 'modelUrl', this.value)"
-        />
-      </div>
+            let isDM = false; // Simple DM check, first connected user is DM
+            let selectedToken = null;
+            let players = new Map();
 
-      <div id="tokenPanel" style="display: none;">
-        <h2>Select Token</h2>
-        <select id="tokenList" name="Tokens" size="6" style="width: 300px">
-          <!-- This is where the tokens <option> tags go -->
-        </select>
-        <button id="scaleUpButton">Bigger</button>
-        <button id="scaleDownButton">Smaller</button>
-        <button id="deleteButton">Delete</button>
-      </div>
-      
-      
-      <!--                 />                                             -->
-      <!--   (           //-------------------------------------(         -->       
-      <!--  (*)OXOXOXOXO(*>======================================\        -->
-      <!--   (           \\---------------------------------------)       -->
-      <!--                \>                    OUR SCENE DESCRIPTION     -->
-      
-      <div id="scenePanel" style="display: none;">
-        Before you grows a fantastical tree. The leaves age in all the colors of autumn, and a large owl regards you from a low branch.<br>
-        "Beware of the Keep of the One-Eyed Lord!"<br>
-        <a href="dungeon.html">Proceed down or..</a><br>
-        <a href="3dvtt.glitch.me/dungeon">Head to town.</a>
-      </div>
+            // --- Networking ---
+            NAF.schemas.add({
+                template: '#token-template',
+                components: [
+                    'position',
+                    'rotation',
+                    'scale',
+                    {
+                        component: 'gltf-model-plus',
+                        property: 'extras'
+                    }
+                ]
+            });
+            
+             NAF.schemas.add({
+                template: '#player-template',
+                components: [
+                    'position',
+                    'rotation',
+                    'scale',
+                    {
+                        selector: '.nametag',
+                        component: 'text',
+                        property: 'value'
+                    }
+                ]
+            });
 
-      <!--                           ___                                                          -->
-      <!--                          ( ((                                                          -->
-      <!--                           ) ))                                                         -->
-      <!--  .::.                    / /(                                                          -->
-      <!-- 'M .-;-.-.-.-.-.-.-.-.-/| ((::::::::::::::::::::::::::::::::::::::::::::::.._          -->
-      <!--(J ( ( ( ( ( ( ( ( ( ( ( |  ))   -====================================-      _.>        -->
-      <!-- `P `-;-`-`-`-`-`-`-`-`-\| ((::::::::::::::::::::::::::::::::::::::::::::::''           -->
-      <!--  `::'                    \ \(                                                          -->
-      <!--                           ) ))                                                         -->
-      <!--                          (_((                                                          -->
-                                                                                                 
+            // Set up networked-aframe
+            sceneEl.setAttribute('networked-scene', {
+                serverURL: 'https://naf-easyrtc-server.glitch.me/',
+                app: 'vtt-3d',
+                room: 'default-room',
+                debug: true,
+                adapter: 'easyrtc'
+            });
 
-      <div id="chatPanel" style="display: none;">
-        <ul>
-          <div class="chat">
-            <form id="form">
-              <div style="display: flex">
-                <input type="text" name="" autocomplete="off" id="input" />
-                <button id="send-btn">Send</button>
-              </div>
-            </form>
-            <div class="messages"></div>
-          </div>
-        </ul>
-      </div>
+            document.body.addEventListener('connected', function (evt) {
+                myIdSpan.textContent = NAF.clientId;
+                statusText.textContent = 'Connected';
+                statusText.classList.remove('text-yellow-400');
+                statusText.classList.add('text-green-400');
 
-      <!-- Movement Panel -->
-      <div id="movementPanel" style="display: none;">
-        <button id="Space">+</button>
-        <button id="KeyW">↑</button>
-        <button id="ControlLeft">-</button>
-        <button id="KeyA">←</button>
-        <button id="KeyS">↓</button>
-        <button id="KeyD">→</button>
-      </div>
-    </div>
-  </body>
+                // The first person to connect is the DM.
+                if (NAF.connection.getConnectedClients().length === 0) {
+                    isDM = true;
+                    document.getElementById('ui-controls').style.display = 'block';
+                }
+
+                // Set a random name for this player
+                const myPlayer = document.getElementById('player');
+                const nametag = myPlayer.querySelector('.nametag');
+                const randomName = faker.name.firstName();
+                if (nametag) {
+                    nametag.setAttribute('text', 'value', randomName);
+                    // This is a bit of a hack to sync the initial name
+                    setTimeout(() => NAF.entities.updateEntity(myPlayer), 1000);
+                }
+                 players.set(NAF.clientId, { name: randomName });
+                 updatePlayerList();
+            });
+            
+             document.body.addEventListener('clientConnected', (evt) => {
+                const client = NAF.connection.getConnectedClients()[evt.detail.clientId];
+                // New clients will get player names via entity updates
+                updatePlayerList();
+            });
+
+            document.body.addEventListener('clientDisconnected', (evt) => {
+                players.delete(evt.detail.clientId);
+                updatePlayerList();
+            });
+
+            document.body.addEventListener('entityCreated', (evt) => {
+                 const entity = evt.detail.el;
+                if (entity.classList.contains('player')) {
+                     setTimeout(() => updatePlayerList(), 500); // Wait for components to initialize
+                }
+            });
+
+            function updatePlayerList() {
+                const allPlayers = document.querySelectorAll('.player');
+                players.clear();
+                players.set(NAF.clientId, { name: document.getElementById('player').querySelector('.nametag').getAttribute('text').value });
+                
+                allPlayers.forEach(p => {
+                    const owner = p.getAttribute('networked').owner;
+                    const name = p.querySelector('.nametag')?.getAttribute('text')?.value;
+                    if(owner && name) players.set(owner, { name });
+                });
+                
+                playerSelect.innerHTML = '<option value="">DM (default)</option>';
+                players.forEach((player, id) => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = `${player.name} (${id.substring(0,4)})`;
+                    playerSelect.appendChild(option);
+                });
+            }
+
+
+            // --- DM Functionality ---
+            addTokenBtn.addEventListener('click', () => {
+                if (!isDM) return;
+
+                const tokenEntity = document.createElement('a-entity');
+                tokenEntity.setAttribute('networked', {
+                    template: '#token-template',
+                    persistent: true
+                });
+                tokenEntity.setAttribute('position', `${Math.random() * 4 - 2} 0.5 ${Math.random() * 4 - 6}`);
+                tokenEntity.setAttribute('class', 'token draggable');
+                
+                // Initialize extras data
+                const extrasData = {
+                    id: `token-${faker.random.uuid()}`,
+                    ownerId: NAF.clientId,
+                    name: "New Token",
+                    hp: 10,
+                    maxHp: 10,
+                    armorClass: 12,
+                    speed: 30
+                };
+                tokenEntity.setAttribute('gltf-model-plus', { extras: JSON.stringify(extrasData) });
+
+                sceneEl.appendChild(tokenEntity);
+            });
+
+            assignOwnerBtn.addEventListener('click', () => {
+                if (!isDM || !selectedToken) return;
+                const newOwnerId = playerSelect.value;
+                NAF.entities.changeOwner(selectedToken.id, newOwnerId);
+                
+                // Update extras data with new owner
+                let extras = JSON.parse(selectedToken.getAttribute('gltf-model-plus').extras);
+                extras.ownerId = newOwnerId || NAF.clientId; // if empty, assign to DM
+                selectedToken.setAttribute('gltf-model-plus', {extras: JSON.stringify(extras)});
+
+                // Resync the entity
+                if(NAF.entities.isMine(selectedToken)){
+                     NAF.entities.updateEntity(selectedToken);
+                }
+                
+                console.log(`Assigned token ${selectedToken.id} to ${newOwnerId || 'DM'}`);
+            });
+
+            // --- Inspector ---
+            function openInspector(entity) {
+                selectedToken = entity;
+                dmTools.style.display = isDM ? 'block' : 'none';
+                const extrasStr = entity.getAttribute('gltf-model-plus')?.extras;
+                if (!extrasStr) {
+                    inspectorContent.innerHTML = `<p class="text-red-400">This object has no inspectable properties.</p>`;
+                    inspector.classList.remove('translate-x-full');
+                    return;
+                }
+
+                try {
+                    const extras = JSON.parse(extrasStr);
+                    let content = '';
+
+                    for (const key in extras) {
+                        const value = extras[key];
+                        content += `
+                            <div class="flex items-center justify-between">
+                                <label for="inspector-${key}" class="text-sm font-medium text-gray-300 capitalize">${key.replace(/([A-Z])/g, ' $1')}:</label>
+                                <input type="${typeof value === 'number' ? 'number' : 'text'}" id="inspector-${key}" data-key="${key}" value="${value}" class="ml-2 bg-gray-700 border border-gray-600 rounded-md p-1 w-2/3 text-right">
+                            </div>
+                        `;
+                    }
+                    inspectorContent.innerHTML = content;
+
+                    // Add event listeners for input changes
+                    const inputs = inspectorContent.querySelectorAll('input');
+                    inputs.forEach(input => {
+                        input.addEventListener('change', (e) => {
+                            if (!NAF.entities.isMine(selectedToken)) return;
+                            const key = e.target.dataset.key;
+                            let newValue = e.target.value;
+                            if (e.target.type === 'number') newValue = parseFloat(newValue);
+                            
+                            let currentExtras = JSON.parse(selectedToken.getAttribute('gltf-model-plus').extras);
+                            currentExtras[key] = newValue;
+                            
+                            selectedToken.setAttribute('gltf-model-plus', { extras: JSON.stringify(currentExtras) });
+                             if(NAF.entities.isMine(selectedToken)){
+                               NAF.entities.updateEntity(selectedToken);
+                             }
+                        });
+                    });
+
+                } catch (e) {
+                    console.error("Error parsing extras data:", e);
+                    inspectorContent.innerHTML = `<p class="text-red-400">Could not parse object properties.</p><pre class="text-xs bg-gray-900 p-2 rounded">${extrasStr}</pre>`;
+                }
+
+                inspector.classList.remove('translate-x-full');
+            }
+
+            function closeInspector() {
+                inspector.classList.add('translate-x-full');
+                selectedToken = null;
+                dmTools.style.display = 'none';
+            }
+
+            closeInspectorBtn.addEventListener('click', closeInspector);
+
+            // --- Object Interaction ---
+            let draggedEl = null;
+            let grabOffset = new THREE.Vector3();
+
+            sceneEl.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('draggable')) {
+                     if (!NAF.entities.isMine(e.target)) {
+                        console.warn("Trying to move an object you don't own.");
+                        return; // Can't move if you don't own it
+                    }
+                    draggedEl = e.target;
+                    
+                    const intersection = e.detail.intersection;
+                    if (intersection) {
+                        const worldPos = new THREE.Vector3().copy(intersection.point);
+                        draggedEl.object3D.parent.worldToLocal(worldPos);
+                        grabOffset.copy(draggedEl.object3D.position).sub(worldPos);
+                    }
+                } else {
+                    closeInspector();
+                }
+            });
+
+             sceneEl.addEventListener('mouseup', (e) => {
+                if (draggedEl && e.target === draggedEl) {
+                    openInspector(draggedEl);
+                }
+                draggedEl = null;
+            });
+
+            document.getElementById('ground').addEventListener('mousemove', (e) => {
+                if (!draggedEl) return;
+                const intersection = e.detail.intersection;
+                if (intersection) {
+                    const worldPos = new THREE.Vector3().copy(intersection.point);
+                    draggedEl.object3D.parent.worldToLocal(worldPos);
+                    
+                    draggedEl.object3D.position.x = worldPos.x + grabOffset.x;
+                    draggedEl.object3D.position.z = worldPos.z + grabOffset.z;
+                }
+            });
+            
+             // Custom component to sync gltf-model extras
+            AFRAME.registerComponent('gltf-model-plus', {
+              schema: {
+                extras: {
+                  type: 'string',
+                  default: '{}'
+                }
+              },
+              update: function() {
+                // Not much to do here, NAF syncs the data.
+                // You could add logic here to react to data changes if needed.
+              }
+            });
+        });
+    </script>
+</body>
 </html>
