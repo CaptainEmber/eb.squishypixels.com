@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static & Noise Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Custom styles for sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #4a5568; /* gray-700 */
+            border-radius: 9999px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+            cursor: pointer;
+        }
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #a0aec0; /* gray-400 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #2d3748; /* gray-800 */
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #a0aec0; /* gray-400 */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #2d3748; /* gray-800 */
+        }
+        
+        /* Horizontal slider (volume) */
+        #volume-slider {
+            width: 100%;
+            height: 8px;
+        }
+
+        /* Vertical slider wrapper */
+        .slider-wrapper {
+            height: 150px;
+            width: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Vertical slider (EQ) */
+        .slider-container {
+            width: 150px; /* This is the visual height */
+            height: 8px;  /* This is the visual width */
+            transform: rotate(270deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-300 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-2xl mx-auto p-6 md:p-8 bg-gray-800 rounded-2xl shadow-2xl border border-gray-700">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-white">Static & Noise Generator</h1>
+            <p class="text-gray-400 mt-2">Create and shape your own ambient sounds.</p>
+        </header>
+
+        <main>
+            <!-- Main Controls -->
+            <div class="flex items-center justify-center mb-8">
+                <button id="play-pause-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg focus:outline-none focus:ring-4 focus:ring-indigo-500/50">
+                    <svg id="play-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <svg id="pause-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="play-pause-text">Play</span>
+                </button>
+            </div>
+
+            <!-- Presets -->
+            <div class="mb-8">
+                <h2 class="text-lg font-semibold text-center mb-4 text-white">Presets</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <button data-noise-type="white" class="noise-preset-btn bg-gray-300 text-gray-900 hover:bg-gray-200 transition-all duration-200 py-2 px-4 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">White</button>
+                    <button data-noise-type="pink" class="noise-preset-btn bg-pink-500 text-white hover:bg-pink-600 transition-all duration-200 py-2 px-4 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">Pink</button>
+                    <button data-noise-type="brown" class="noise-preset-btn bg-amber-800 text-white hover:bg-amber-900 transition-all duration-200 py-2 px-4 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">Brown</button>
+                    <button data-noise-type="green" class="noise-preset-btn bg-green-600 text-white hover:bg-green-700 transition-all duration-200 py-2 px-4 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">Green</button>
+                </div>
+                <div id="preset-description" class="text-center text-gray-400 mt-4 min-h-[3rem] px-2 flex items-center justify-center">
+                    <!-- Description will be injected here -->
+                </div>
+            </div>
+
+            <!-- Frequency Shaper -->
+            <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-700">
+                 <h2 class="text-lg font-semibold text-center mb-6 text-white">Frequency Shaper</h2>
+                 <div class="flex justify-around items-end">
+                     <!-- This will be populated by JavaScript -->
+                     <div id="filter-controls" class="flex justify-around items-end w-full"></div>
+                 </div>
+            </div>
+
+            <!-- Volume Control -->
+            <div class="mt-8">
+                <h2 class="text-lg font-semibold text-center mb-4 text-white">Master Volume</h2>
+                <div class="flex items-center gap-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M12 12a2 2 0 012-2h2a2 2 0 012 2v0a2 2 0 01-2 2h-2a2 2 0 01-2-2v0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.683 2.92 11 3.14 11 3.62v16.76c0 .48-.317.7-.683.424L5.586 15z" /></svg>
+                    <input id="volume-slider" type="range" min="0" max="1" step="0.01" value="0.5" class="w-full">
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // DOM Elements
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const playPauseText = document.getElementById('play-pause-text');
+        const playIcon = document.getElementById('play-icon');
+        const pauseIcon = document.getElementById('pause-icon');
+        const volumeSlider = document.getElementById('volume-slider');
+        const filterControlsContainer = document.getElementById('filter-controls');
+        const presetBtns = document.querySelectorAll('.noise-preset-btn');
+        const presetDescription = document.getElementById('preset-description');
+        
+        // Web Audio API setup
+        let audioContext;
+        let masterGain;
+        let noiseSource;
+        let filters = [];
+        let isPlaying = false;
+        let currentNoiseType = 'white';
+
+        const BUFFER_SIZE = 4096;
+
+        // Preset definitions
+        const presets = {
+            'white': {
+                gains: [0, 0, 0, 0, 0],
+                description: 'An equal distribution of all frequencies across the spectrum (example: TV static)'
+            },
+            'pink': {
+                gains: [4, 1, -2, -4, -6],
+                description: 'Filtered noise in between white and brown noise (example: light rain falling, leaves rustling)'
+            },
+            'brown': {
+                gains: [8, 4, -2, -8, -12],
+                description: 'Filtered white noise that creates an emphasis on low frequencies (example: thunder, heavy rain)'
+            },
+            'green': {
+                gains: [-6, 6, 6, -2, -8],
+                description: 'Filtered white noise, centered around 500 Hz (example: an ocean or stream)'
+            }
+        };
+
+        // Filter definitions
+        const filterDefinitions = [
+            { freq: 60, type: 'lowshelf', label: '60Hz' },
+            { freq: 250, type: 'peaking', label: '250Hz' },
+            { freq: 1000, type: 'peaking', label: '1KHz' },
+            { freq: 4000, type: 'peaking', label: '4KHz' },
+            { freq: 10000, type: 'highshelf', label: '10KHz' },
+        ];
+        
+        // Function to initialize AudioContext
+        function initAudio() {
+            if (!audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    masterGain = audioContext.createGain();
+                    masterGain.gain.value = volumeSlider.value;
+                    masterGain.connect(audioContext.destination);
+                    setupFilters();
+                } catch (e) {
+                    alert('Web Audio API is not supported in this browser');
+                    console.error(e);
+                }
+            }
+        }
+        
+        // Setup biquad filters
+        function setupFilters() {
+            // Clear existing filters and controls
+            filters = [];
+            filterControlsContainer.innerHTML = '';
+
+            let lastNode = masterGain;
+
+            filterDefinitions.slice().reverse().forEach(def => {
+                const filter = audioContext.createBiquadFilter();
+                filter.type = def.type;
+                filter.frequency.value = def.freq;
+                filter.gain.value = 0; // Default gain
+                filter.Q.value = 1; // Default Q
+                filter.connect(lastNode);
+                lastNode = filter;
+                filters.unshift(filter); // Add to the beginning of the array
+
+                // Create UI for the filter
+                const controlWrapper = document.createElement('div');
+                controlWrapper.className = 'flex flex-col items-center space-y-2';
+
+                const sliderWrapper = document.createElement('div');
+                sliderWrapper.className = 'slider-wrapper';
+
+                const slider = document.createElement('input');
+                slider.type = 'range';
+                slider.min = -20;
+                slider.max = 20;
+                slider.step = 0.1;
+                slider.value = 0;
+                slider.className = 'slider-container';
+                slider.addEventListener('input', (e) => {
+                    filter.gain.value = parseFloat(e.target.value);
+                });
+
+                const label = document.createElement('span');
+                label.textContent = def.label;
+                label.className = 'text-xs font-medium text-gray-400';
+                
+                sliderWrapper.appendChild(slider);
+                controlWrapper.appendChild(sliderWrapper);
+                controlWrapper.appendChild(label);
+                filterControlsContainer.prepend(controlWrapper);
+            });
+        }
+
+        // Noise Generation
+        function createNoise(type) {
+            if (!audioContext) return;
+            
+            const node = audioContext.createScriptProcessor(BUFFER_SIZE, 1, 1);
+            let lastOut = 0;
+            
+            // Pink noise variables
+            let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+
+            node.onaudioprocess = (e) => {
+                const output = e.outputBuffer.getChannelData(0);
+                for (let i = 0; i < BUFFER_SIZE; i++) {
+                    if (type === 'pink') {
+                         const white = Math.random() * 2 - 1;
+                         b0 = 0.99886 * b0 + white * 0.0555179;
+                         b1 = 0.99332 * b1 + white * 0.0750759;
+                         b2 = 0.96900 * b2 + white * 0.1538520;
+                         b3 = 0.86650 * b3 + white * 0.3104856;
+                         b4 = 0.55000 * b4 + white * 0.5329522;
+                         b5 = -0.7616 * b5 - white * 0.0168980;
+                         output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+                         output[i] *= 0.11; // (roughly) compensate for gain
+                         b6 = white * 0.115926;
+                    } else if (type === 'brown') {
+                        const white = Math.random() * 2 - 1;
+                        output[i] = (lastOut + (0.02 * white)) / 1.02;
+                        lastOut = output[i];
+                        output[i] *= 3.5; // (roughly) compensate for gain
+                    } else { // Default to white noise for 'white', 'green', or any other type
+                        output[i] = Math.random() * 2 - 1;
+                    }
+                }
+            };
+            return node;
+        }
+        
+        // Control Functions
+        function play() {
+            if (!audioContext) initAudio();
+            
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            if (!noiseSource) {
+                noiseSource = createNoise(currentNoiseType);
+                const firstFilter = filters[0];
+                if (firstFilter) {
+                   noiseSource.connect(firstFilter);
+                }
+            }
+            
+            isPlaying = true;
+            updatePlayPauseUI();
+        }
+
+        function pause() {
+            if (audioContext && audioContext.state === 'running') {
+                audioContext.suspend();
+            }
+            isPlaying = false;
+            updatePlayPauseUI();
+        }
+        
+        function togglePlayPause() {
+            if (isPlaying) {
+                pause();
+            } else {
+                play();
+            }
+        }
+        
+        function changeNoiseType(type) {
+             if (noiseSource) {
+                noiseSource.disconnect();
+            }
+            currentNoiseType = type;
+            noiseSource = createNoise(type);
+            if (isPlaying) {
+                 const firstFilter = filters[0];
+                 if (firstFilter) {
+                   noiseSource.connect(firstFilter);
+                 }
+            }
+        }
+        
+        // UI Updates
+        function updatePlayPauseUI() {
+            if (isPlaying) {
+                playPauseText.textContent = 'Pause';
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            } else {
+                playPauseText.textContent = 'Play';
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+            }
+        }
+
+        // Event Listeners
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        
+        volumeSlider.addEventListener('input', (e) => {
+            if (masterGain) {
+                masterGain.gain.value = parseFloat(e.target.value);
+            }
+        });
+        
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.noiseType;
+                const preset = presets[type];
+                if (!preset) return;
+
+                // 1. Change the underlying noise type
+                changeNoiseType(type);
+                
+                // 2. Update sliders and filters based on preset gains
+                const sliders = filterControlsContainer.querySelectorAll('input[type="range"]');
+                sliders.forEach((slider, index) => {
+                    const gainValue = preset.gains[index];
+                    slider.value = gainValue;
+                    if(filters[index]) {
+                        filters[index].gain.value = gainValue;
+                    }
+                });
+                
+                // 3. Update description
+                presetDescription.textContent = preset.description;
+
+                // 4. Highlight active preset button
+                presetBtns.forEach(b => {
+                    b.classList.remove('ring-2', 'ring-offset-2', 'ring-offset-gray-800', 'ring-white', 'opacity-100');
+                    b.classList.add('opacity-70');
+                });
+                btn.classList.remove('opacity-70');
+                btn.classList.add('ring-2', 'ring-offset-2', 'ring-offset-gray-800', 'ring-white', 'opacity-100');
+            });
+        });
+        
+        // Set initial state
+        window.onload = () => {
+             // We call initAudio here to create the audio nodes and build the slider UI
+            initAudio();
+            // Set default preset by simulating a click, which also sets slider positions and description
+            document.querySelector('[data-noise-type="white"]').click();
+        };
+
+    </script>
+</body>
+</html>
+
+
